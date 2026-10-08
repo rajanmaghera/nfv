@@ -155,10 +155,10 @@ def failure_table(results: list[dict]) -> str:
                 counts[f] += 1
         never = sum(1 for r in rs if not r.get("reached_proof") and r["verdict"] == ABSTAIN)
         rows.append([arm, str(len(rs)), str(never)] +
-                    [str(counts.get(k, 0)) for k in ("type", "audit", "witness", "proof", "reachability",
-                                                     "llm-error")])
-    return table(rows, ["arm", "entries", "never reached proof", "type", "audit", "witness", "proof", "reachability",
-                        "llm-error"])
+                    [str(counts.get(k, 0)) for k in ("type", "audit", "witness", "no-witness", "proof",
+                                                     "reachability", "llm-error")])
+    return table(rows, ["arm", "entries", "never reached proof", "type", "audit", "witness", "no-witness", "proof",
+                        "reachability", "llm-error"])
 
 
 def wrong_verdicts(results: list[dict]) -> str:

@@ -33,7 +33,7 @@ def test_claude_cli_backend_flags_stdin_and_json(tmp_path, monkeypatch):
     exe, env = fake_claude(tmp_path, ["shifted_mean"])
     for k, v in env.items():
         monkeypatch.setenv(k, v)
-    b = ClaudeCLIBackend(model="sonnet", executable=exe)
+    b = ClaudeCLIBackend(model="sonnet", executable=exe, effort="medium")
     c = b.complete("[NFV-STAGE: dafny.theory]\nformalize sum", system="be terse")
     assert c.stage == "dafny.theory"
     assert "function Sum" in c.text
@@ -46,6 +46,13 @@ def test_claude_cli_backend_flags_stdin_and_json(tmp_path, monkeypatch):
     assert argv[argv.index("--model") + 1] == "sonnet"
     assert argv[argv.index("--system-prompt") + 1] == "be terse"
     assert "--no-session-persistence" in argv
+    assert argv[argv.index("--effort") + 1] == "medium"
+    # isolated from the user's setup and from this repository
+    assert "--safe-mode" in argv and "--strict-mcp-config" in argv
+    assert argv[argv.index("--setting-sources") + 1] == ""
+    cwd = json.loads((tmp_path / "argv.jsonl").read_text().splitlines()[0])["cwd"]
+    assert "nfv-claude-" in cwd and not Path(cwd).exists()  # fresh empty dir, removed afterwards
+    assert json.loads((tmp_path / "argv.jsonl").read_text().splitlines()[0])["files_in_cwd"] == []
     # the prompt travelled on stdin, not argv
     assert not any("formalize sum" in a for a in argv)
 
@@ -57,8 +64,16 @@ def test_claude_cli_backend_error_and_overrides(tmp_path, monkeypatch):
     monkeypatch.setenv("FAKE_CLAUDE_FAIL", "1")
     with pytest.raises(LLMError, match="simulated failure"):
         ClaudeCLIBackend(executable=exe, retries=1).complete("[NFV-STAGE: x]\nhi")
+    monkeypatch.delenv("FAKE_CLAUDE_FAIL")
+    monkeypatch.setenv("FAKE_CLAUDE_LOGGED_OUT", "1")
+    with pytest.raises(LLMError, match="skips OAuth"):
+        ClaudeCLIBackend(executable=exe, isolation="bare").complete("[NFV-STAGE: x]\nhi")
     monkeypatch.setenv("NFV_CLAUDE_ARGS", "--output-format json --model opus")
     assert ClaudeCLIBackend(executable=exe).command(None) == [exe, "-p", "--output-format", "json", "--model", "opus"]
+    monkeypatch.delenv("NFV_CLAUDE_ARGS")
+    assert "--bare" in ClaudeCLIBackend(executable=exe, isolation="bare").args
+    with pytest.raises(ValueError):
+        ClaudeCLIBackend(executable=exe, isolation="leaky")
     with pytest.raises(LLMError, match="cannot run"):
         ClaudeCLIBackend(executable=str(tmp_path / "missing")).complete("hi")
 

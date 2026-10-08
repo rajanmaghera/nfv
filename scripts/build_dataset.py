@@ -144,9 +144,11 @@ for args in inputs:
     import copy
     a = copy.deepcopy(args)
     try:
-        rv = fn(*copy.deepcopy(args))
+        rv = fn(*a)
     except Exception as e:
         out.append("exc:" + type(e).__name__); continue
+    # like the upstream nl2postcond harness, S_L is evaluated AFTER the call on the same
+    # argument objects: in-place mutation of a parameter is visible to the postcondition
     env = dict(zip(params, a)); env["return_value"] = rv
     try:
         exec(post, dict(env))

@@ -99,3 +99,12 @@ def test_unparseable_outputs_fail_the_attempt_cleanly(dafny, arm):
     r = arm(paper_example(), ScriptedBackend(lambda p: "I am not sure what you mean."), dafny,
             Budget(attempts=1, rounds=0, stage_rounds=1))
     assert r.verdict == ABSTAIN and r.failures in (["type"], ["audit"])
+
+
+def test_witness_none_abstains_without_proof_rounds(dafny):
+    llm = scripted("truncate_ref_none")
+    out = pipeline(dataset_entry("HumanEval_2/reference"), llm, dafny, Budget(attempts=3, rounds=4))
+    assert out["refute"].verdict == ABSTAIN and out["refute"].failures == ["no-witness"]
+    assert out["refute"].attempts_used == 1 and not out["refute"].reached_proof
+    assert not any(stage == "dafny.refute.proof" for stage, _ in llm.calls)
+    assert out["verify"].verdict == VERIFIED

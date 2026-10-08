@@ -105,7 +105,8 @@ def cmd_run(args) -> int:
         return 0
 
     backend = make_backend(args.backend, model=args.model, base_url=args.base_url, claude_args=args.claude_args,
-                           temperature=args.temperature, max_tokens=args.max_tokens, timeout=args.llm_timeout)
+                           temperature=args.temperature, max_tokens=args.max_tokens, timeout=args.llm_timeout,
+                           effort=args.effort, isolation=args.claude_isolation)
     transcript = Transcript(backend, out / "transcript.jsonl", {"run_arm": args.arm})
     budget = Budget(attempts=args.attempts, rounds=args.rounds, stage_rounds=args.stage_rounds)
     dafny = Dafny(time_limit=args.dafny_time_limit, cores=args.dafny_cores)
@@ -205,6 +206,9 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--base-url", default=None, help="OpenAI-compatible endpoint for local backends")
     r.add_argument("--claude-args", default=None,
                    help='override the extra `claude -p` flags (default: --output-format json --tools "" ...)')
+    r.add_argument("--effort", default=None, help="claude backend: --effort level (low|medium|high|...)")
+    r.add_argument("--claude-isolation", choices=("safe-mode", "bare", "none"), default=None,
+                   help="claude backend isolation (default safe-mode; bare needs ANTHROPIC_API_KEY)")
     r.add_argument("--temperature", type=float, default=0.2)
     r.add_argument("--max-tokens", type=int, default=8192)
     r.add_argument("--llm-timeout", type=float, default=None)

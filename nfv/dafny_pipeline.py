@@ -34,6 +34,9 @@ from .libdocs import library_docs
 from .llm import Backend, LLMError
 from .tools import Dafny
 
+NO_WITNESS: list[str] = []  # sentinel: the witness stage answered `// NONE`
+NO_WITNESS_RE = re.compile(r"^\s*//\s*NONE\b", re.M)
+
 VERIFIED = "verified"
 REFUTED = "refuted"
 ABSTAIN = "abstain"
@@ -459,13 +462,22 @@ def refutation_arm(entry: Entry, llm: Backend, dafny: Dafny, budget: Budget | No
 
         def parse(text):
             code = extract_code(text, ("dafny",))
+            if code is not None and NO_WITNESS_RE.search(code) and not clauses(code, "requires"):
+                return NO_WITNESS
             cl = clauses(code, "requires") if code else []
             return cl or None
 
         try:
-            wit = _stage_loop(ctx, "witness", P.witness(entry, fe.header, fe.pre), parse, check)
+            wit = _stage_loop(ctx, "witness", P.witness(entry, fe.header, fe.pre), parse,
+                              lambda v: None if v is NO_WITNESS else check(v))
         except StageFailure as e:
             raise StageFailure(e.stage, "witness", e.detail) from e
+        if wit is NO_WITNESS:
+            # the model judges the program correct: abstain from refutation for this entry
+            # (a definitive answer; further attempts would only re-ask the same question)
+            res.failures.append("no-witness")
+            ctx.log(ctx.attempt, "witness", "none-proposed")
+            return True
         art = fe.artifact([(A.PRE_TAG, c) for c in fe.pre] + [(A.WITNESS_TAG, c) for c in wit],
                           [(A.NEGATED_POST_TAG, neg)], entry.entry_point)
         ctx.save("4_refute_initial.dfy", art)

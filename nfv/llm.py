@@ -23,6 +23,7 @@ import os
 import re
 import shlex
 import subprocess
+import tempfile
 import threading
 import time
 import urllib.error
@@ -64,28 +65,46 @@ class Backend:
 class ClaudeCLIBackend(Backend):
     """`claude -p` in print mode. The prompt goes on stdin to avoid argv limits.
 
-    Default flags: ``--output-format json`` (so errors and cost are machine
-    readable), ``--tools ""`` plus ``--disallowedTools mcp__*`` (no tools: the
-    model must answer from the prompt, like every other backend; the harness,
-    not the agent, runs the verifier) and ``--no-session-persistence``.
-    Override with ``extra_args`` or the ``NFV_CLAUDE_ARGS`` environment variable.
+    Claude is isolated from the repository and the user's setup:
+
+    * every call runs in a fresh, empty temporary working directory (nothing to
+      read, no project CLAUDE.md, no git repo);
+    * ``--tools ""`` and ``--disallowedTools mcp__*``: no tools, so the model answers
+      from the prompt like every other backend (the harness runs the verifier);
+    * isolation mode ``safe-mode`` (default): ``--safe-mode --strict-mcp-config
+      --setting-sources ""`` -- no CLAUDE.md, memory, skills, plugins, hooks or MCP
+      servers, but normal (OAuth) login still works. ``bare`` uses ``--bare`` instead,
+      which skips OAuth too and so needs ``ANTHROPIC_API_KEY``;
+    * ``--no-session-persistence`` and ``--output-format json``.
+
+    ``extra_args`` / ``NFV_CLAUDE_ARGS`` replace the default flags entirely.
     """
 
     name = "claude-cli"
-    DEFAULT_ARGS = ["--output-format", "json", "--tools", "", "--disallowedTools", "mcp__*",
-                    "--no-session-persistence"]
+    BASE_ARGS = ["--output-format", "json", "--tools", "", "--disallowedTools", "mcp__*", "--no-session-persistence"]
+    ISOLATION_ARGS = {
+        "safe-mode": ["--safe-mode", "--strict-mcp-config", "--setting-sources", ""],
+        "bare": ["--bare", "--strict-mcp-config"],
+        "none": [],
+    }
+    DEFAULT_ARGS = BASE_ARGS + ISOLATION_ARGS["safe-mode"]
 
     def __init__(self, model: str | None = None, executable: str | None = None,
-                 extra_args: list[str] | None = None, timeout: float = 900, retries: int = 2):
+                 extra_args: list[str] | None = None, timeout: float = 900, retries: int = 2,
+                 effort: str | None = None, isolation: str | None = None):
         self.model = model
+        self.effort = effort or os.environ.get("NFV_CLAUDE_EFFORT")
         self.executable = executable or os.environ.get("NFV_CLAUDE_BIN", "claude")
+        isolation = isolation or os.environ.get("NFV_CLAUDE_ISOLATION", "safe-mode")
+        if isolation not in self.ISOLATION_ARGS:
+            raise ValueError(f"isolation must be one of {sorted(self.ISOLATION_ARGS)}")
         env_args = os.environ.get("NFV_CLAUDE_ARGS")
         if extra_args is not None:
             self.args = list(extra_args)
         elif env_args is not None:
             self.args = shlex.split(env_args)
         else:
-            self.args = list(self.DEFAULT_ARGS)
+            self.args = self.BASE_ARGS + self.ISOLATION_ARGS[isolation]
         self.timeout = timeout
         self.retries = retries
 
@@ -93,6 +112,8 @@ class ClaudeCLIBackend(Backend):
         cmd = [self.executable, "-p"] + self.args
         if self.model:
             cmd += ["--model", self.model]
+        if self.effort:
+            cmd += ["--effort", self.effort]
         if system:
             cmd += ["--system-prompt", system]
         return cmd
@@ -103,7 +124,9 @@ class ClaudeCLIBackend(Backend):
         for attempt in range(self.retries + 1):
             t0 = time.monotonic()
             try:
-                proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=self.timeout)
+                with tempfile.TemporaryDirectory(prefix="nfv-claude-") as cwd:
+                    proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
+                                          timeout=self.timeout, cwd=cwd)
             except subprocess.TimeoutExpired:
                 last_err = f"timeout after {self.timeout}s"
                 continue
@@ -117,6 +140,8 @@ class ClaudeCLIBackend(Backend):
             text, meta = self.parse_output(proc.stdout)
             if meta.get("is_error"):
                 last_err = f"claude reported error: {text[:500]}"
+                if "not logged in" in text.lower() or "/login" in text:
+                    raise LLMError(last_err + " (--bare skips OAuth: use isolation 'safe-mode' or set ANTHROPIC_API_KEY)")
                 time.sleep(2 ** attempt)
                 continue
             return Completion(text=text, stage=stage_of(prompt), seconds=dt, meta=meta)
@@ -143,8 +168,8 @@ class ClaudeCLIBackend(Backend):
         if not results:
             return s, {}
         r = results[-1]
-        meta = {k: r.get(k) for k in ("is_error", "subtype", "total_cost_usd", "num_turns", "session_id", "usage")
-                if k in r}
+        meta = {k: r.get(k) for k in ("is_error", "subtype", "total_cost_usd", "num_turns", "session_id", "usage",
+                                      "modelUsage", "duration_ms") if k in r}
         return str(r.get("result", "")), meta
 
 
@@ -309,10 +334,11 @@ def read_transcript(path: Path | str) -> Iterable[dict]:
 
 def make_backend(kind: str, *, model: str | None = None, base_url: str | None = None,
                  claude_args: str | None = None, temperature: float = 0.2,
-                 max_tokens: int = 8192, timeout: float | None = None) -> Backend:
+                 max_tokens: int = 8192, timeout: float | None = None, effort: str | None = None,
+                 isolation: str | None = None) -> Backend:
     if kind in ("claude", "claude-cli"):
         return ClaudeCLIBackend(model=model, extra_args=shlex.split(claude_args) if claude_args is not None else None,
-                                timeout=timeout or 900)
+                                timeout=timeout or 900, effort=effort, isolation=isolation)
     if kind in ("local", "openai", "llama.cpp", "ollama", "vllm"):
         default_url = {"ollama": "http://localhost:11434/v1"}.get(kind, "http://localhost:8080/v1")
         return OpenAICompatBackend(base_url=base_url or os.environ.get("NFV_BASE_URL", default_url),

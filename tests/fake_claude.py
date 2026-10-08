@@ -23,10 +23,14 @@ def main() -> int:
     log = os.environ.get("FAKE_CLAUDE_LOG")
     if log:
         with open(log, "a") as fh:
-            fh.write(json.dumps({"argv": sys.argv[1:], "prompt_head": prompt[:80]}) + "\n")
+            fh.write(json.dumps({"argv": sys.argv[1:], "cwd": os.getcwd(), "files_in_cwd": os.listdir("."),
+                                 "prompt_head": prompt[:80]}) + "\n")
     if os.environ.get("FAKE_CLAUDE_FAIL"):
         print(json.dumps({"type": "result", "subtype": "error_during_execution", "is_error": True,
                           "result": "simulated failure"}))
+        return 1
+    if os.environ.get("FAKE_CLAUDE_LOGGED_OUT"):
+        print(json.dumps({"type": "result", "is_error": True, "result": "Not logged in · Please run /login"}))
         return 1
     m = re.search(r"^\[NFV-STAGE: ([\w.-]+)\]", prompt, re.M)
     stage = m.group(1) if m else "unknown"

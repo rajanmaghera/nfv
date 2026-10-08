@@ -292,7 +292,10 @@ is certain.
 Answer with ONE fenced block of `requires` clauses:
 ```dafny
 requires ...
-```"""
+```
+If you are convinced that NO allowed input violates S_L, do not invent a placeholder input: answer with a block
+containing only `// NONE`. The refutation then abstains, which is the right outcome for a correct program.
+Never use `requires false` or any other contradictory input."""
 
 
 # ---------------------------------------------------------------- baselines
