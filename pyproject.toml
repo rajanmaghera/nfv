@@ -1,0 +1,18 @@
+[project]
+name = "nfv"
+version = "0.1.0"
+description = "Neuro-formal verification (arXiv:2608.21516) replication: Python -> Dafny / CBMC with LLM front ends"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+nfv = "nfv.cli:main"
+
+[tool.setuptools]
+packages = ["nfv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

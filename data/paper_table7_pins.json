@@ -1,0 +1,723 @@
+[
+ {
+  "task_id": "HumanEval/1",
+  "entry_point": "separate_paren_groups",
+  "p": 2,
+  "m": 0,
+  "postcondition": "assert all((s.count('(') == s.count(')') and '()' in s for s in return_value))"
+ },
+ {
+  "task_id": "HumanEval/2",
+  "entry_point": "truncate_number",
+  "p": 0,
+  "m": 202,
+  "postcondition": "assert 0 <= return_value < 1"
+ },
+ {
+  "task_id": "HumanEval/3",
+  "entry_point": "below_zero",
+  "p": 0,
+  "m": 200,
+  "postcondition": "assert return_value == True and any((sum(operations[:i + 1]) < 0 for i in range(len(operations)))) or return_value == False"
+ },
+ {
+  "task_id": "HumanEval/4",
+  "entry_point": "mean_absolute_deviation",
+  "p": 1,
+  "m": 213,
+  "postcondition": "assert 0 <= return_value"
+ },
+ {
+  "task_id": "HumanEval/5",
+  "entry_point": "intersperse",
+  "p": 0,
+  "m": 27,
+  "postcondition": "assert len(return_value) == len(numbers) * 2 - 1 if numbers else len(return_value) == 0"
+ },
+ {
+  "task_id": "HumanEval/6",
+  "entry_point": "parse_nested_parens",
+  "p": 1,
+  "m": 7,
+  "postcondition": "assert len(return_value) == len(paren_string.split())"
+ },
+ {
+  "task_id": "HumanEval/8",
+  "entry_point": "sum_product",
+  "p": 0,
+  "m": 49,
+  "postcondition": "assert sum(numbers) == return_value[0]"
+ },
+ {
+  "task_id": "HumanEval/9",
+  "entry_point": "rolling_max",
+  "p": 0,
+  "m": 106,
+  "postcondition": "assert all((return_value[i] >= max(numbers[:i + 1]) for i in range(len(numbers))))"
+ },
+ {
+  "task_id": "HumanEval/10",
+  "entry_point": "make_palindrome",
+  "p": 0,
+  "m": 0,
+  "postcondition": "assert return_value.startswith(string) and return_value == return_value[::-1]"
+ },
+ {
+  "task_id": "HumanEval/11",
+  "entry_point": "string_xor",
+  "p": 0,
+  "m": 6,
+  "postcondition": "assert len(return_value) == len(a) == len(b) and all((ch in '01' for ch in return_value))"
+ },
+ {
+  "task_id": "HumanEval/13",
+  "entry_point": "greatest_common_divisor",
+  "p": 0,
+  "m": 205,
+  "postcondition": "assert a % return_value == 0 and b % return_value == 0"
+ },
+ {
+  "task_id": "HumanEval/17",
+  "entry_point": "parse_music",
+  "p": 2,
+  "m": 202,
+  "postcondition": "assert len(return_value) == len([note for note in music_string.split() if note in ['o', 'o|', '.|']])"
+ },
+ {
+  "task_id": "HumanEval/19",
+  "entry_point": "sort_numbers",
+  "p": 0,
+  "m": 3,
+  "postcondition": "assert return_value == ' '.join(sorted(numbers.split(), key=lambda x: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'].index(x)))"
+ },
+ {
+  "task_id": "HumanEval/20",
+  "entry_point": "find_closest_elements",
+  "p": 1,
+  "m": 147,
+  "postcondition": "assert return_value in [(x, y) for i, x in enumerate(numbers) for j, y in enumerate(numbers) if i != j and x <= y]"
+ },
+ {
+  "task_id": "HumanEval/21",
+  "entry_point": "rescale_to_unit",
+  "p": 1,
+  "m": 200,
+  "postcondition": "assert len(numbers) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/25",
+  "entry_point": "factorize",
+  "p": 1,
+  "m": 202,
+  "postcondition": "assert n == eval('*'.join(map(str, return_value)))"
+ },
+ {
+  "task_id": "HumanEval/26",
+  "entry_point": "remove_duplicates",
+  "p": 0,
+  "m": 205,
+  "postcondition": "assert len(return_value) == len(set(return_value))"
+ },
+ {
+  "task_id": "HumanEval/30",
+  "entry_point": "get_positive",
+  "p": 0,
+  "m": 200,
+  "postcondition": "assert all((i > 0 for i in return_value))"
+ },
+ {
+  "task_id": "HumanEval/31",
+  "entry_point": "is_prime",
+  "p": 0,
+  "m": 27,
+  "postcondition": "assert n < 2 and (not return_value) or n >= 2"
+ },
+ {
+  "task_id": "HumanEval/33",
+  "entry_point": "sort_third",
+  "p": 0,
+  "m": 5,
+  "postcondition": "assert all((l[i] == return_value[i] for i in range(len(l)) if i % 3 != 0))"
+ },
+ {
+  "task_id": "HumanEval/34",
+  "entry_point": "unique",
+  "p": 0,
+  "m": 200,
+  "postcondition": "assert return_value == sorted(list(set(l)))"
+ },
+ {
+  "task_id": "HumanEval/35",
+  "entry_point": "max_element",
+  "p": 0,
+  "m": 201,
+  "postcondition": "assert return_value == max(l)"
+ },
+ {
+  "task_id": "HumanEval/36",
+  "entry_point": "fizz_buzz",
+  "p": 0,
+  "m": 205,
+  "postcondition": "assert isinstance(return_value, int) and return_value >= 0"
+ },
+ {
+  "task_id": "HumanEval/37",
+  "entry_point": "sort_even",
+  "p": 5,
+  "m": 11,
+  "postcondition": "assert sorted(return_value[::2]) == sorted(l[::2])"
+ },
+ {
+  "task_id": "HumanEval/41",
+  "entry_point": "car_race_collision",
+  "p": 0,
+  "m": 7,
+  "postcondition": "assert isinstance(return_value, int) and return_value >= 0"
+ },
+ {
+  "task_id": "HumanEval/42",
+  "entry_point": "incr_list",
+  "p": 0,
+  "m": 200,
+  "postcondition": "assert all((return_value[i] == l[i] + 1 for i in range(len(l))))"
+ },
+ {
+  "task_id": "HumanEval/43",
+  "entry_point": "pairs_sum_to_zero",
+  "p": 5,
+  "m": 42,
+  "postcondition": "assert not return_value or any((x + y == 0 for i, x in enumerate(l) for j, y in enumerate(l) if i != j))"
+ },
+ {
+  "task_id": "HumanEval/44",
+  "entry_point": "change_base",
+  "p": 0,
+  "m": 60,
+  "postcondition": "assert int(return_value, base) == x"
+ },
+ {
+  "task_id": "HumanEval/45",
+  "entry_point": "triangle_area",
+  "p": 0,
+  "m": 200,
+  "postcondition": "assert return_value == 0.5 * a * h"
+ },
+ {
+  "task_id": "HumanEval/47",
+  "entry_point": "median",
+  "p": 4,
+  "m": 200,
+  "postcondition": "assert sum((i <= return_value for i in l)) >= len(l) // 2 and sum((i >= return_value for i in l)) >= len(l) // 2"
+ },
+ {
+  "task_id": "HumanEval/49",
+  "entry_point": "modp",
+  "p": 1,
+  "m": 1,
+  "postcondition": "assert 0 <= return_value < p"
+ },
+ {
+  "task_id": "HumanEval/50",
+  "entry_point": "decode_shift",
+  "p": 9,
+  "m": 289,
+  "postcondition": "assert len(s) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/51",
+  "entry_point": "remove_vowels",
+  "p": 0,
+  "m": 200,
+  "postcondition": "assert all((c not in 'aeiouAEIOU' for c in return_value))"
+ },
+ {
+  "task_id": "HumanEval/53",
+  "entry_point": "add",
+  "p": 0,
+  "m": 200,
+  "postcondition": "assert return_value == x + y"
+ },
+ {
+  "task_id": "HumanEval/56",
+  "entry_point": "correct_bracketing",
+  "p": 0,
+  "m": 200,
+  "postcondition": "assert return_value == False or brackets.count('<') == brackets.count('>')"
+ },
+ {
+  "task_id": "HumanEval/58",
+  "entry_point": "common",
+  "p": 0,
+  "m": 203,
+  "postcondition": "assert return_value == sorted(return_value)"
+ },
+ {
+  "task_id": "HumanEval/59",
+  "entry_point": "largest_prime_factor",
+  "p": 1,
+  "m": 44,
+  "postcondition": "assert n % return_value == 0"
+ },
+ {
+  "task_id": "HumanEval/60",
+  "entry_point": "sum_to_n",
+  "p": 0,
+  "m": 189,
+  "postcondition": "assert return_value == n * (n + 1) // 2"
+ },
+ {
+  "task_id": "HumanEval/61",
+  "entry_point": "correct_bracketing",
+  "p": 0,
+  "m": 201,
+  "postcondition": "assert return_value == False or brackets.count('(') == brackets.count(')')"
+ },
+ {
+  "task_id": "HumanEval/64",
+  "entry_point": "vowels_count",
+  "p": 0,
+  "m": 0,
+  "postcondition": "assert return_value == s.lower().count('a') + s.lower().count('e') + s.lower().count('i') + s.lower().count('o') + s.lower().count('u') + (1 if s.lower().endswith('y') else 0)"
+ },
+ {
+  "task_id": "HumanEval/65",
+  "entry_point": "circular_shift",
+  "p": 0,
+  "m": 7,
+  "postcondition": "assert len(str(x)) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/66",
+  "entry_point": "digitSum",
+  "p": 6,
+  "m": 200,
+  "postcondition": "assert sum((ord(char) for char in s if char.isupper())) == return_value"
+ },
+ {
+  "task_id": "HumanEval/67",
+  "entry_point": "fruit_distribution",
+  "p": 0,
+  "m": 15,
+  "postcondition": "import re\nassert isinstance(return_value, int) and return_value >= 0 and (return_value == n - sum(map(int, re.findall('\\\\d+', s))))"
+ },
+ {
+  "task_id": "HumanEval/68",
+  "entry_point": "pluck",
+  "p": 0,
+  "m": 62,
+  "postcondition": "assert isinstance(return_value, list) and (len(return_value) == 2 and return_value[0] % 2 == 0 and (arr[return_value[1]] == return_value[0])) or (return_value == [] and all((i % 2 != 0 for i in arr)))"
+ },
+ {
+  "task_id": "HumanEval/69",
+  "entry_point": "search",
+  "p": 1,
+  "m": 1,
+  "postcondition": "assert return_value == max([num for num in set(lst) if lst.count(num) >= num], default=-1)"
+ },
+ {
+  "task_id": "HumanEval/70",
+  "entry_point": "strange_sort_list",
+  "p": 0,
+  "m": 48,
+  "postcondition": "assert len(lst) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/71",
+  "entry_point": "triangle_area",
+  "p": 0,
+  "m": 210,
+  "postcondition": "assert isinstance(return_value, float) and round(return_value, 2) == return_value or return_value == -1"
+ },
+ {
+  "task_id": "HumanEval/73",
+  "entry_point": "smallest_change",
+  "p": 2,
+  "m": 0,
+  "postcondition": "assert 0 <= return_value <= len(arr) // 2"
+ },
+ {
+  "task_id": "HumanEval/77",
+  "entry_point": "iscube",
+  "p": 2,
+  "m": 0,
+  "postcondition": "assert return_value == (round(abs(a) ** (1.0 / 3)) ** 3 == abs(a))"
+ },
+ {
+  "task_id": "HumanEval/78",
+  "entry_point": "hex_key",
+  "p": 1,
+  "m": 203,
+  "postcondition": "assert isinstance(return_value, int) and 0 <= return_value <= len(num)"
+ },
+ {
+  "task_id": "HumanEval/79",
+  "entry_point": "decimal_to_binary",
+  "p": 0,
+  "m": 6,
+  "postcondition": "import re\nassert re.match('^db[01]+db$', return_value)"
+ },
+ {
+  "task_id": "HumanEval/81",
+  "entry_point": "numerical_letter_grade",
+  "p": 0,
+  "m": 215,
+  "postcondition": "assert len(grades) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/86",
+  "entry_point": "anti_shuffle",
+  "p": 2,
+  "m": 0,
+  "postcondition": "assert len(s) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/87",
+  "entry_point": "get_row",
+  "p": 0,
+  "m": 3,
+  "postcondition": "assert all((return_value[i][0] < return_value[i + 1][0] or (return_value[i][0] == return_value[i + 1][0] and return_value[i][1] >= return_value[i + 1][1]) for i in range(len(return_value) - 1)))"
+ },
+ {
+  "task_id": "HumanEval/88",
+  "entry_point": "sort_array",
+  "p": 0,
+  "m": 206,
+  "postcondition": "assert len(array) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/89",
+  "entry_point": "encrypt",
+  "p": 0,
+  "m": 3,
+  "postcondition": "assert len(s) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/90",
+  "entry_point": "next_smallest",
+  "p": 3,
+  "m": 6,
+  "postcondition": "assert (return_value is None) == (len(set(lst)) < 2)"
+ },
+ {
+  "task_id": "HumanEval/93",
+  "entry_point": "encode",
+  "p": 1,
+  "m": 17,
+  "postcondition": "assert len(return_value) == len(message)"
+ },
+ {
+  "task_id": "HumanEval/96",
+  "entry_point": "count_up_to",
+  "p": 3,
+  "m": 1,
+  "postcondition": "assert all((i < n and all((i % j != 0 for j in range(2, int(i ** 0.5) + 1))) for i in return_value))"
+ },
+ {
+  "task_id": "HumanEval/97",
+  "entry_point": "multiply",
+  "p": 0,
+  "m": 0,
+  "postcondition": "assert return_value == abs(a) % 10 * (abs(b) % 10)"
+ },
+ {
+  "task_id": "HumanEval/99",
+  "entry_point": "closest_integer",
+  "p": 9,
+  "m": 9,
+  "postcondition": "assert isinstance(return_value, int) and abs(return_value - float(value)) <= 1"
+ },
+ {
+  "task_id": "HumanEval/100",
+  "entry_point": "make_a_pile",
+  "p": 1,
+  "m": 0,
+  "postcondition": "assert len(return_value) == n and all((return_value[i] == return_value[i - 1] + 2 for i in range(1, n)))"
+ },
+ {
+  "task_id": "HumanEval/102",
+  "entry_point": "choose_num",
+  "p": 0,
+  "m": 5,
+  "postcondition": "assert return_value == -1 or (x <= return_value <= y and return_value % 2 == 0 and all((i <= return_value for i in range(x, y + 1) if i % 2 == 0)))"
+ },
+ {
+  "task_id": "HumanEval/103",
+  "entry_point": "rounded_avg",
+  "p": 0,
+  "m": 12,
+  "postcondition": "assert isinstance(return_value, str) and return_value.startswith('0b') and all((c in '01' for c in return_value[2:])) or return_value == -1"
+ },
+ {
+  "task_id": "HumanEval/104",
+  "entry_point": "unique_digits",
+  "p": 0,
+  "m": 126,
+  "postcondition": "assert all((str(i)[j] in '13579' for i in return_value for j in range(len(str(i))))) and return_value == sorted(return_value)"
+ },
+ {
+  "task_id": "HumanEval/105",
+  "entry_point": "by_length",
+  "p": 1,
+  "m": 203,
+  "postcondition": "assert all((item in ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'] for item in return_value)) and len(return_value) <= len(arr)"
+ },
+ {
+  "task_id": "HumanEval/106",
+  "entry_point": "f",
+  "p": 0,
+  "m": 15,
+  "postcondition": "assert len(return_value) == n"
+ },
+ {
+  "task_id": "HumanEval/107",
+  "entry_point": "even_odd_palindrome",
+  "p": 0,
+  "m": 140,
+  "postcondition": "assert sum(return_value) == len([i for i in range(1, n + 1) if str(i) == str(i)[::-1]])"
+ },
+ {
+  "task_id": "HumanEval/108",
+  "entry_point": "count_nums",
+  "p": 2,
+  "m": 59,
+  "postcondition": "assert isinstance(return_value, int) and 0 <= return_value <= len(arr)"
+ },
+ {
+  "task_id": "HumanEval/110",
+  "entry_point": "exchange",
+  "p": 4,
+  "m": 0,
+  "postcondition": "assert (return_value == 'YES') == (len([num for num in lst1 if num % 2 != 0]) <= len([num for num in lst2 if num % 2 == 0]))"
+ },
+ {
+  "task_id": "HumanEval/111",
+  "entry_point": "histogram",
+  "p": 7,
+  "m": 18,
+  "postcondition": "assert all([isinstance(key, str) and key.islower() and isinstance(value, int) and (value == test.count(key)) for key, value in return_value.items()])"
+ },
+ {
+  "task_id": "HumanEval/112",
+  "entry_point": "reverse_delete",
+  "p": 0,
+  "m": 205,
+  "postcondition": "assert return_value[1] == (return_value[0] == return_value[0][::-1])"
+ },
+ {
+  "task_id": "HumanEval/113",
+  "entry_point": "odd_count",
+  "p": 0,
+  "m": 220,
+  "postcondition": "assert len(lst) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/114",
+  "entry_point": "minSubArraySum",
+  "p": 4,
+  "m": 0,
+  "postcondition": "assert return_value == min((sum(nums[i:j]) for i in range(len(nums)) for j in range(i + 1, len(nums) + 1)))"
+ },
+ {
+  "task_id": "HumanEval/115",
+  "entry_point": "max_fill",
+  "p": 0,
+  "m": 0,
+  "postcondition": "assert isinstance(return_value, int) and return_value >= 0"
+ },
+ {
+  "task_id": "HumanEval/116",
+  "entry_point": "sort_array",
+  "p": 8,
+  "m": 9,
+  "postcondition": "assert all((bin(return_value[i]).count('1') <= bin(return_value[i + 1]).count('1') and (bin(return_value[i]).count('1') != bin(return_value[i + 1]).count('1') or return_value[i] <= return_value[i + 1]) for i in range(len(return_value) - 1)))"
+ },
+ {
+  "task_id": "HumanEval/117",
+  "entry_point": "select_words",
+  "p": 7,
+  "m": 4,
+  "postcondition": "assert all((sum((1 for c in word if c.lower() not in 'aeiou ')) == n for word in return_value)) and all((word in return_value for word in s.split() if sum((1 for c in word if c.lower() not in 'aeiou ')) == n))"
+ },
+ {
+  "task_id": "HumanEval/118",
+  "entry_point": "get_closest_vowel",
+  "p": 7,
+  "m": 11,
+  "postcondition": "assert return_value == '' or return_value in 'AEIOUaeiou'"
+ },
+ {
+  "task_id": "HumanEval/120",
+  "entry_point": "maximum",
+  "p": 0,
+  "m": 0,
+  "postcondition": "assert len(return_value) == k and all((return_value[i] <= return_value[i + 1] for i in range(len(return_value) - 1)))"
+ },
+ {
+  "task_id": "HumanEval/121",
+  "entry_point": "solution",
+  "p": 1,
+  "m": 0,
+  "postcondition": "assert isinstance(return_value, int) and return_value == sum((x for i, x in enumerate(lst) if i % 2 == 0 and x % 2 == 1))"
+ },
+ {
+  "task_id": "HumanEval/123",
+  "entry_point": "get_odd_collatz",
+  "p": 0,
+  "m": 43,
+  "postcondition": "assert return_value == sorted(return_value) and all((num % 2 != 0 for num in return_value))"
+ },
+ {
+  "task_id": "HumanEval/127",
+  "entry_point": "intersection",
+  "p": 0,
+  "m": 235,
+  "postcondition": "assert return_value in ['YES', 'NO']"
+ },
+ {
+  "task_id": "HumanEval/128",
+  "entry_point": "prod_signs",
+  "p": 2,
+  "m": 77,
+  "postcondition": "assert isinstance(return_value, int) and len(arr) > 0 or (return_value is None and len(arr) == 0)"
+ },
+ {
+  "task_id": "HumanEval/130",
+  "entry_point": "tri",
+  "p": 0,
+  "m": 3,
+  "postcondition": "assert len(return_value) == n + 1"
+ },
+ {
+  "task_id": "HumanEval/131",
+  "entry_point": "digits",
+  "p": 0,
+  "m": 18,
+  "postcondition": "assert return_value == 0 if all((int(digit) % 2 == 0 for digit in str(n))) else True"
+ },
+ {
+  "task_id": "HumanEval/133",
+  "entry_point": "sum_squares",
+  "p": 0,
+  "m": 151,
+  "postcondition": "assert isinstance(return_value, int) and return_value >= 0"
+ },
+ {
+  "task_id": "HumanEval/135",
+  "entry_point": "can_arrange",
+  "p": 0,
+  "m": 0,
+  "postcondition": "assert return_value == -1 and sorted(arr) == arr or (return_value > 0 and arr[return_value] < arr[return_value - 1])"
+ },
+ {
+  "task_id": "HumanEval/136",
+  "entry_point": "largest_smallest_integers",
+  "p": 0,
+  "m": 115,
+  "postcondition": "assert return_value[0] == max(filter(lambda x: x < 0, lst), default=None) and return_value[1] == min(filter(lambda x: x > 0, lst), default=None)"
+ },
+ {
+  "task_id": "HumanEval/141",
+  "entry_point": "file_name_check",
+  "p": 0,
+  "m": 42,
+  "postcondition": "assert return_value == 'Yes' and (file_name[0].isalpha() and file_name.split('.')[1] in ['txt', 'exe', 'dll']) or return_value == 'No'"
+ },
+ {
+  "task_id": "HumanEval/143",
+  "entry_point": "words_in_sentence",
+  "p": 1,
+  "m": 200,
+  "postcondition": "assert all((word in sentence.split() and len(word) in [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97] for word in return_value.split()))"
+ },
+ {
+  "task_id": "HumanEval/145",
+  "entry_point": "order_by_points",
+  "p": 3,
+  "m": 134,
+  "postcondition": "assert len(nums) == len(return_value)"
+ },
+ {
+  "task_id": "HumanEval/146",
+  "entry_point": "specialFilter",
+  "p": 0,
+  "m": 49,
+  "postcondition": "assert return_value == len([num for num in nums if num > 10 and int(str(num)[0]) % 2 != 0 and (int(str(num)[-1]) % 2 != 0)])"
+ },
+ {
+  "task_id": "HumanEval/148",
+  "entry_point": "bf",
+  "p": 1,
+  "m": 205,
+  "postcondition": "assert isinstance(return_value, tuple) and all((isinstance(planet, str) for planet in return_value))"
+ },
+ {
+  "task_id": "HumanEval/150",
+  "entry_point": "x_or_y",
+  "p": 0,
+  "m": 113,
+  "postcondition": "assert return_value in {x, y}"
+ },
+ {
+  "task_id": "HumanEval/151",
+  "entry_point": "double_the_difference",
+  "p": 1,
+  "m": 4,
+  "postcondition": "assert isinstance(return_value, int) and return_value >= 0"
+ },
+ {
+  "task_id": "HumanEval/152",
+  "entry_point": "compare",
+  "p": 1,
+  "m": 206,
+  "postcondition": "assert len(return_value) == len(game) == len(guess)"
+ },
+ {
+  "task_id": "HumanEval/153",
+  "entry_point": "Strongest_Extension",
+  "p": 1,
+  "m": 4,
+  "postcondition": "assert return_value == class_name + '.' + max(extensions, key=lambda x: sum((1 for c in x if c.isupper())) - sum((1 for c in x if c.islower())))"
+ },
+ {
+  "task_id": "HumanEval/155",
+  "entry_point": "even_odd_count",
+  "p": 0,
+  "m": 8,
+  "postcondition": "assert sum(return_value) == len(str(abs(num)))"
+ },
+ {
+  "task_id": "HumanEval/156",
+  "entry_point": "int_to_mini_roman",
+  "p": 1,
+  "m": 203,
+  "postcondition": "assert isinstance(return_value, str) and all((char in 'ivxlcdm' for char in return_value))"
+ },
+ {
+  "task_id": "HumanEval/157",
+  "entry_point": "right_angle_triangle",
+  "p": 1,
+  "m": 16,
+  "postcondition": "assert return_value == True and (a ** 2 + b ** 2 == c ** 2 or a ** 2 + c ** 2 == b ** 2 or b ** 2 + c ** 2 == a ** 2) or (return_value == False and (not (a ** 2 + b ** 2 == c ** 2 or a ** 2 + c ** 2 == b ** 2 or b ** 2 + c ** 2 == a ** 2)))"
+ },
+ {
+  "task_id": "HumanEval/159",
+  "entry_point": "eat",
+  "p": 2,
+  "m": 4,
+  "postcondition": "assert return_value == [min(number + need, number + remaining), max(0, remaining - need)]"
+ },
+ {
+  "task_id": "HumanEval/161",
+  "entry_point": "solve",
+  "p": 0,
+  "m": 1,
+  "postcondition": "assert all((ch.isalpha() and ch.swapcase() == s[i] or (not ch.isalpha() and (ch == s[i] or ch == s[-(i + 1)])) for i, ch in enumerate(return_value)))"
+ },
+ {
+  "task_id": "HumanEval/163",
+  "entry_point": "generate_integers",
+  "p": 0,
+  "m": 128,
+  "postcondition": "assert all((i % 2 == 0 for i in return_value))"
+ }
+]
