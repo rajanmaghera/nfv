@@ -47,3 +47,16 @@ def test_compile_errors_are_repaired_or_fail_the_attempt(cbmc):
 def test_cbmc_llm_error(cbmc):
     r = refutation_arm(dataset_entry("HumanEval_2/reference"), ScriptedBackend({}), cbmc, Budget(attempts=1))
     assert r.failures == ["llm-error"]
+
+
+def test_saturating_library_model_gives_spurious_refutation(cbmc):
+    # observed with opus in the pilot: int(2.68e154) saturated to LLONG_MAX -> a false counterexample
+    r = refutation_arm(dataset_entry("HumanEval_2/reference"), scripted("cbmc_truncate_ref_saturating"), cbmc,
+                       Budget(attempts=1, rounds=1))
+    assert r.verdict == REFUTED and r.label == "correct"
+
+
+def test_model_domain_guard_removes_spurious_refutation(cbmc):
+    r = refutation_arm(dataset_entry("HumanEval_2/reference"), scripted("cbmc_truncate_ref_domain"), cbmc,
+                       Budget(attempts=1, rounds=1))
+    assert r.verdict == ABSTAIN and r.failures == ["no-counterexample"]

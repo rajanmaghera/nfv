@@ -348,6 +348,11 @@ Python -> C modeling conventions (shared by every stage; follow them exactly):
   stage. Results are written to fresh fixed-size buffers or static storage; no malloc needed.
 - Bounds: every collection the harness builds has at most NFV_MAX_LEN (= 5) elements; loops are bounded.
 - The C program must be free of undefined behaviour (CBMC checks bounds, pointers, overflow, conversions, division).
+- Where C cannot represent the Python behaviour faithfully (Python ints are unbounded, int(float) of a huge float,
+  inf/NaN, ...), NEVER return a saturated or made-up value: guard the operation with `NFV_MODEL_DOMAIN(cond);`
+  (predefined; it restricts the search to executions where `cond` holds, i.e. where your model is faithful),
+  e.g. `NFV_MODEL_DOMAIN(x > -9.2e18 && x < 9.2e18); return (long long)x;` or
+  `NFV_MODEL_DOMAIN(!__builtin_add_overflow(a, b, &r));`. Use it in library and translated code alike.
 """
 
 

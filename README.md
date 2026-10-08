@@ -41,14 +41,24 @@ Everything runs inside `nix develop`. `nix run . -- <command>` also works, and
 ### Running with `claude -p`
 
 ```bash
-python3 -m nfv run --arm pipeline --backend claude --model sonnet --jobs 4 --out runs/claude-sonnet
-python3 -m nfv report runs/claude-sonnet
+NFV_CLAUDE_BIN=~/.local/bin/claude python3 -m nfv run --arm pipeline --backend claude --model opus \
+    --effort medium --jobs 3 --out runs/opus
+python3 -m nfv report runs/opus
 ```
 
-Each stage is one stateless call: `claude -p --output-format json --tools "" --disallowedTools "mcp__*"
---no-session-persistence [--model M] --system-prompt <...>`, with the prompt on stdin. Tools are off, so
-Claude answers from the prompt like any other backend, and the harness runs the verifier.
-Override the flags with `--claude-args "..."` or `NFV_CLAUDE_ARGS`, and the binary with `NFV_CLAUDE_BIN`.
+Each stage is one stateless call, with the prompt on stdin. Claude is isolated from this repository and from
+your setup:
+
+* every call runs in a fresh, empty temporary working directory;
+* tools are off (`--tools "" --disallowedTools "mcp__*"`), so Claude answers from the prompt like any other
+  backend and the harness runs the verifier;
+* `--claude-isolation safe-mode` (the default) adds `--safe-mode --strict-mcp-config --setting-sources ""`.
+  This turns off CLAUDE.md, memory, skills, plugins, hooks and MCP while normal login keeps working.
+  `--claude-isolation bare` uses `--bare` instead, which also skips OAuth and so needs `ANTHROPIC_API_KEY`;
+* `--no-session-persistence --output-format json`, plus `--model`, `--effort` and `--system-prompt`.
+
+Override the flags entirely with `--claude-args "..."` or `NFV_CLAUDE_ARGS`. Pilot results with Opus are in
+[`pilot/README.md`](pilot/README.md).
 
 ### Running with a local LLM
 
@@ -112,12 +122,18 @@ frozen `requires` / `ensures`. Each proof-repair round is then checked mechanica
   translation declares.
 * **Precondition consistency:** `lemma (params) requires PRE ensures false {}` must *not* verify.
 * **Refutation:** the goal must be exactly `!(S_F)`. In the reachability check, the proved artifact
-  with `ensures false` must *not* verify.
+  with `ensures false` must *not* verify. The witness stage may answer `// NONE` when it believes the program
+  is correct. The arm then abstains without spending proof rounds. This is a deviation from the paper,
+  added after the Opus pilot (see `pilot/README.md`); it can only add abstentions, never verdicts.
 
 The CBMC arm uses the same tags. Its harness must contain exactly one
 `__CPROVER_assume(nfv_pre(..))`, one call to the function under test and one
 `__CPROVER_assert(nfv_spec(..), "nfv_spec")`, and the translated code must be deterministic.
-CBMC runs with bounds, pointer, overflow, conversion, division and shift checks. When one of
+CBMC runs with bounds, pointer, overflow, conversion, division and shift checks. Where C cannot model
+Python faithfully (unbounded ints, `int()` of a huge float), the code must say so with
+`NFV_MODEL_DOMAIN(cond)`, which expands to `__CPROVER_assume(cond)`. Returning saturated or made-up values
+is not allowed. For refutation an assumption only prunes executions, so every counterexample that
+survives is genuine. When one of
 those undefined-behaviour checks fails, the stage that owns the failing function gets a
 goal-blind repair prompt. Only a trace violating `nfv_spec` with no undefined behaviour counts
 as a refutation.
@@ -134,7 +150,9 @@ dropped, then the result goes through `ast.unparse`.
 
 * All 103 sanitized postconditions match Table 7 exactly.
 * With `--validate`, every reference satisfies its postcondition on all of its mutant's killing
-  inputs, and every mutant violates it on at least one. Each check runs as a subprocess.
+  inputs, and every mutant violates it on at least one. Each check runs as a subprocess. As in the
+  upstream harness, S_L is evaluated after the call on the same argument objects (post-state). This
+  matters for parameters mutated in place: of the 5 such entries, only HumanEval/42's mutant depends on it.
 
 **Known deviation:** the paper does not publish the name lists behind its tiers. Our classifier
 gets the paper's Appendix B examples right, but gives 22/18/35/23/5 tasks for L0/L1/L2a/L2b/L3,
@@ -184,4 +202,6 @@ nfv/tools.py                dafny / cbmc runners and output parsing
 nfv/libdocs.py              E_nl: runtime docstrings of the library surface
 nfv/cli.py                  `python -m nfv ...`
 tests/                      smoke tests + sample LLM outputs
+pilot/                      Claude Opus pilot runs (results, transcripts) and findings
+scripts/run_stats.py        per-entry calls / cost / events of a run
 ```

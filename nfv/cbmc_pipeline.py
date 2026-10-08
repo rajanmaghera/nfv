@@ -31,6 +31,10 @@ from .llm import Backend, LLMError
 from .tools import Cbmc
 
 SPEC_PROPERTY = "nfv_spec"
+# Library and translation code may restrict executions to the domain where the C model is faithful to Python
+# (e.g. int(float) only within the long long range). For bounded *refutation* an assumption only prunes
+# executions, so every counterexample that survives is still a real one -- unlike a saturated or made-up value.
+PRELUDE = "#define NFV_MODEL_DOMAIN(cond) __CPROVER_assume(cond)\n"
 FORBIDDEN_C = re.compile(r"__CPROVER_|\bnondet_\w*\s*\(|\basm\b|#\s*include\s*[<\"](?!(stdbool|stddef|stdint|string|limits|math)\.h)")
 
 
@@ -107,7 +111,7 @@ def refutation_arm(entry: Entry, llm: Backend, cbmc: Cbmc, budget: Budget | None
     t0 = time.monotonic()
 
     def compiles(code: str) -> tuple[str, str] | None:
-        err = cbmc.compile_check(code)
+        err = cbmc.compile_check(PRELUDE + code)
         return ("type", err) if err else None
 
     def attempt() -> bool:
@@ -149,7 +153,7 @@ def refutation_arm(entry: Entry, llm: Backend, cbmc: Cbmc, budget: Budget | None
         owner = {fn: k for k, code in parts.items() for fn in _c_functions(code)}
 
         for rnd in range(budget.rounds + 1):
-            full = "\n".join(parts.values())
+            full = PRELUDE + "\n".join(parts.values())
             ctx.save(f"cbmc_round{rnd}.c", full)
             r = cbmc.run(full)
             if r.timed_out:
@@ -194,7 +198,7 @@ def refutation_arm(entry: Entry, llm: Backend, cbmc: Cbmc, budget: Budget | None
             if stage == "translation" and check_harness(fixed, entry.entry_point):
                 continue
             if A.check_provenance(candidate["translation"], entry.source) or \
-                    cbmc.compile_check("\n".join(candidate.values())):
+                    cbmc.compile_check(PRELUDE + "\n".join(candidate.values())):
                 continue
             parts = candidate
         res.failures.append("ub")
