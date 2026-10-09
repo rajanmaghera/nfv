@@ -61,9 +61,10 @@ DECL_KEYWORDS = {"function", "predicate", "method", "lemma", "datatype", "codata
                  "ghost", "opaque", "static", "abstract", "include"}
 CLAUSE_KEYWORDS = {"requires", "ensures", "decreases", "reads", "modifies", "invariant", "yield"}
 # a `{` right after one of these opens a set display / comprehension, not a body
-# (`>` is deliberately absent: it usually closes a type such as `seq<T>`)
+# (`>` is deliberately absent: it usually closes a type such as `seq<T>`; `|` too: it usually closes a
+#  cardinality `|s|`, as in `requires i < |s| {`)
 EXPR_PREV = {"in", "then", "else", "return", ":=", "==", "!=", "<", "<=", ">=", "+", "-", "*", "/", "%",
-             "&&", "||", "==>", "<==", "<==>", "!", "(", "[", ",", ":", "=>", "|", "::", "!in", "requires",
+             "&&", "||", "==>", "<==", "<==>", "!", "(", "[", ",", ":", "=>", "::", "!in", "requires",
              "ensures", "invariant", "decreases", "reads", "modifies", "assert", "assume", "expect", "var", "case",
              "{", ";", "multiset", "iset", "imap", "map", "set", "seq", "#"}
 

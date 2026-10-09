@@ -177,3 +177,14 @@ def test_tokenizer_handles_strings_chars_comments_and_primes():
     toks = [t.text for t in A.tokenize("var s := \"a // not a comment\"; /* x /* nested */ y */ var c := 'b'; x' := x'';")]
     assert toks == ["var", "s", ":=", "\"a // not a comment\"", ";", "var", "c", ":=", "'b'", ";", "x'", ":=",
                     "x''", ";"]
+
+
+def test_cardinality_before_body_brace_is_not_a_set_display():
+    # regression: seen in the full Opus run, `|s| {` made bodies look absent (false "unproven assumption")
+    code = ("function PyIndex(s: seq<int>, i: int): int\n  requires -|s| <= i < |s|\n"
+            "{ if i < 0 then s[|s| + i] else s[i] }\n"
+            "method m(xs: seq<int>) returns (r: seq<int>)\n  ensures |r| == |(set x | x in r)|\n{\n  r := [];\n}\n")
+    decls = A.declarations(A.tokenize(code))
+    assert [(d.kind, d.name, d.has_body) for d in decls] == [("function", "PyIndex", True), ("method", "m", True)]
+    assert A.check_forbidden(code, region="PROGRAM") == []
+    assert A.entry_contract(code, "m")["ensures"] == ["|r| == |(set x | x in r)|"]
