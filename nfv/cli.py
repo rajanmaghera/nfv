@@ -24,7 +24,7 @@ from pathlib import Path
 from . import metrics as M
 from . import prompts as P
 from .dataset import DEFAULT_DATASET, Entry, load_entries, select
-from .llm import Transcript, make_backend
+from .llm import USAGE, Transcript, UsageBudgetExceeded, make_backend
 
 ARMS = ("verify", "refute", "pipeline", "cbmc", "judge", "unstaged")
 
@@ -149,19 +149,42 @@ def cmd_run(args) -> int:
                 fh.write(json.dumps(rec) + "\n")
         return recs
 
+    if args.stop_at_usage is not None:
+        USAGE.soft, USAGE.hard = args.stop_at_usage, args.stop_at_usage + args.usage_slack
+        print(f"usage guard: no new entries at {USAGE.soft:.0%} session usage, abort in-flight at {USAGE.hard:.0%}",
+              file=sys.stderr)
     n_done = 0
+    queue = list(todo)
+    stopped = False
     with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
-        futs = {pool.submit(run_one, e): e for e in todo}
-        for f in as_completed(futs):
-            e = futs[f]
+        futs = {}
+        while queue and len(futs) < max(1, args.jobs):
+            e = queue.pop(0)
+            futs[pool.submit(run_one, e)] = e
+        while futs:
+            done = next(as_completed(futs))
+            e = futs.pop(done)
             n_done += 1
             try:
-                recs = f.result()
+                recs = done.result()
                 summary = ", ".join(f"{r['arm']}={r['verdict']}" for r in recs)
+            except UsageBudgetExceeded as ex:
+                summary = f"ABORTED (not recorded): {ex}"
             except Exception as ex:  # noqa: BLE001  (keep the run going; the entry stays unscored)
                 summary = f"CRASH {type(ex).__name__}: {ex}"
-            print(f"[{n_done}/{len(todo)}] {e.id} ({e.label}): {summary}", file=sys.stderr)
-    print(M.main_table(M.load_results(results_path)))
+            usage = f" [usage: {USAGE.describe()}]" if USAGE.utilization else ""
+            print(f"[{n_done}/{len(todo)}] {e.id} ({e.label}): {summary}{usage}", file=sys.stderr, flush=True)
+            if USAGE.soft_reached() and not stopped:
+                stopped = True
+                print(f"usage guard: {USAGE.describe()} >= {USAGE.soft:.0%}; not starting the remaining "
+                      f"{len(queue)} entries", file=sys.stderr, flush=True)
+            if not stopped and queue:
+                e2 = queue.pop(0)
+                futs[pool.submit(run_one, e2)] = e2
+    if results_path.exists() and results_path.stat().st_size:
+        print(M.main_table(M.load_results(results_path)))
+    else:
+        print("(no results recorded)")
     return 0
 
 
@@ -226,6 +249,10 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--out", default="runs/latest")
     r.add_argument("--fresh", action="store_true", help="ignore results already in --out")
     r.add_argument("--keep-events", action="store_true", help="keep successful-stage events in results")
+    r.add_argument("--stop-at-usage", type=float, default=None,
+                   help="claude backend: stop starting entries once the 5-hour session utilization reaches this "
+                        "fraction (e.g. 0.75); in-flight entries abort (unrecorded) past it + --usage-slack")
+    r.add_argument("--usage-slack", type=float, default=0.03)
     r.set_defaults(func=cmd_run)
 
     rep = sub.add_parser("report")

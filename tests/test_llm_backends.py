@@ -40,7 +40,7 @@ def test_claude_cli_backend_flags_stdin_and_json(tmp_path, monkeypatch):
     assert c.meta["is_error"] is False and c.meta["session_id"] == "fake"
     argv = json.loads((tmp_path / "argv.jsonl").read_text().splitlines()[0])["argv"]
     assert argv[0] == "-p"
-    assert argv[argv.index("--output-format") + 1] == "json"
+    assert argv[argv.index("--output-format") + 1] == "stream-json" and "--verbose" in argv
     assert argv[argv.index("--tools") + 1] == ""          # built-in tools disabled
     assert argv[argv.index("--disallowedTools") + 1] == "mcp__*"
     assert argv[argv.index("--model") + 1] == "sonnet"
@@ -76,6 +76,24 @@ def test_claude_cli_backend_error_and_overrides(tmp_path, monkeypatch):
         ClaudeCLIBackend(executable=exe, isolation="leaky")
     with pytest.raises(LLMError, match="cannot run"):
         ClaudeCLIBackend(executable=str(tmp_path / "missing")).complete("hi")
+
+
+def test_rate_limit_events_feed_the_usage_monitor():
+    from nfv.llm import UsageBudgetExceeded, UsageMonitor
+    b = ClaudeCLIBackend(executable="claude")
+    stream = "\n".join([json.dumps({"type": "system"}),
+                        json.dumps({"type": "rate_limit_event", "rate_limit_info": {"unifiedWindows": {
+                            "five_hour": {"utilization": 0.42, "resetsAt": 1}, "seven_day": {"utilization": 0.1}}}}),
+                        json.dumps({"type": "result", "result": "ok", "is_error": False})])
+    text, meta = b.parse_output(stream)
+    m = UsageMonitor(soft=0.4, hard=0.5)
+    m.update(meta["rate_limit"])
+    assert text == "ok" and m.current == 0.42 and m.soft_reached()
+    m.check()  # below hard
+    m.update({"unifiedWindows": {"five_hour": {"utilization": 0.51}}})
+    with pytest.raises(UsageBudgetExceeded):
+        m.check()
+    assert "five_hour 51%" in m.describe()
 
 
 def test_claude_output_parsing_variants():

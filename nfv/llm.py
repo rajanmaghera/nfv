@@ -39,6 +39,51 @@ class LLMError(RuntimeError):
     pass
 
 
+class UsageBudgetExceeded(RuntimeError):
+    """The account's session (5-hour) utilization passed the hard limit: stop calling the model.
+    Deliberately not an LLMError, so an aborted entry is not recorded as an llm-error abstention."""
+
+
+class UsageMonitor:
+    """Latest rate-limit utilization reported by `claude -p` (stream-json `rate_limit_event`).
+
+    ``soft``: stop starting new work once reached; ``hard``: refuse further calls (in-flight entries abort).
+    """
+
+    def __init__(self, soft: float | None = None, hard: float | None = None, window: str = "five_hour"):
+        self.soft, self.hard, self.window = soft, hard, window
+        self.utilization: dict[str, float] = {}
+        self.resets_at: dict[str, int] = {}
+        self._lock = threading.Lock()
+
+    def update(self, info: dict | None):
+        if not info:
+            return
+        with self._lock:
+            for name, w in (info.get("unifiedWindows") or {}).items():
+                if isinstance(w, dict) and w.get("utilization") is not None:
+                    self.utilization[name] = float(w["utilization"])
+                    if w.get("resetsAt"):
+                        self.resets_at[name] = int(w["resetsAt"])
+
+    @property
+    def current(self) -> float | None:
+        return self.utilization.get(self.window)
+
+    def soft_reached(self) -> bool:
+        return self.soft is not None and self.current is not None and self.current >= self.soft
+
+    def check(self):
+        if self.hard is not None and self.current is not None and self.current >= self.hard:
+            raise UsageBudgetExceeded(f"{self.window} utilization {self.current:.0%} >= {self.hard:.0%}")
+
+    def describe(self) -> str:
+        return ", ".join(f"{k} {v:.0%}" for k, v in sorted(self.utilization.items())) or "unknown"
+
+
+USAGE = UsageMonitor()
+
+
 def stage_of(prompt: str) -> str:
     m = STAGE_RE.search(prompt)
     return m.group(1) if m else "unknown"
@@ -81,7 +126,10 @@ class ClaudeCLIBackend(Backend):
     """
 
     name = "claude-cli"
-    BASE_ARGS = ["--output-format", "json", "--tools", "", "--disallowedTools", "mcp__*", "--no-session-persistence"]
+    # stream-json (+ --verbose, which print mode requires for it) carries `rate_limit_event`s with the
+    # account's session/weekly utilization, which the usage monitor needs; the final `result` event is the answer
+    BASE_ARGS = ["--output-format", "stream-json", "--verbose", "--tools", "", "--disallowedTools", "mcp__*",
+                 "--no-session-persistence"]
     ISOLATION_ARGS = {
         "safe-mode": ["--safe-mode", "--strict-mcp-config", "--setting-sources", ""],
         "bare": ["--bare", "--strict-mcp-config"],
@@ -107,6 +155,7 @@ class ClaudeCLIBackend(Backend):
             self.args = self.BASE_ARGS + self.ISOLATION_ARGS[isolation]
         self.timeout = timeout
         self.retries = retries
+        self.usage = USAGE
 
     def command(self, system: str | None) -> list[str]:
         cmd = [self.executable, "-p"] + self.args
@@ -122,6 +171,7 @@ class ClaudeCLIBackend(Backend):
         cmd = self.command(system)
         last_err = ""
         for attempt in range(self.retries + 1):
+            self.usage.check()
             t0 = time.monotonic()
             try:
                 with tempfile.TemporaryDirectory(prefix="nfv-claude-") as cwd:
@@ -138,6 +188,7 @@ class ClaudeCLIBackend(Backend):
                 time.sleep(2 ** attempt)
                 continue
             text, meta = self.parse_output(proc.stdout)
+            self.usage.update(meta.get("rate_limit"))
             if meta.get("is_error"):
                 last_err = f"claude reported error: {text[:500]}"
                 if "not logged in" in text.lower() or "/login" in text:
@@ -164,12 +215,16 @@ class ClaudeCLIBackend(Backend):
                         objs.append(json.loads(line))
                     except json.JSONDecodeError:
                         pass
+        rate = [o["rate_limit_info"] for o in objs if isinstance(o, dict) and o.get("type") == "rate_limit_event"
+                and isinstance(o.get("rate_limit_info"), dict)]
         results = [o for o in objs if isinstance(o, dict) and ("result" in o or o.get("type") == "result")]
         if not results:
-            return s, {}
+            return s, ({"rate_limit": rate[-1]} if rate else {})
         r = results[-1]
         meta = {k: r.get(k) for k in ("is_error", "subtype", "total_cost_usd", "num_turns", "session_id", "usage",
                                       "modelUsage", "duration_ms") if k in r}
+        if rate:
+            meta["rate_limit"] = rate[-1]
         return str(r.get("result", "")), meta
 
 

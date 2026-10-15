@@ -61,3 +61,30 @@ def test_cli_offline_commands():
     assert json.loads(p.stdout)["label"] == "incorrect"
     p = nfv(["check"], {})
     assert p.returncode == 0 and "206 entries" in p.stdout
+
+
+def test_usage_guard_stops_starting_entries(tmp_path):
+    exe, env = fake_claude(tmp_path)
+    env.update(NFV_CLAUDE_BIN=exe, FAKE_CLAUDE_UTILIZATION="0.10,0.20,0.76,0.77")
+    out = tmp_path / "run"
+    p = nfv(["run", "--arm", "judge", "--backend", "claude", "--tasks", "53,2,42", "--jobs", "1",
+             "--stop-at-usage", "0.75", "--out", str(out)], env)
+    assert p.returncode == 0, p.stderr
+    recs = (out / "results.jsonl").read_text().splitlines()
+    assert len(recs) == 3                          # third call reported 76%: nothing new started after it
+    assert "not starting the remaining 3 entries" in p.stderr
+    assert "five_hour 76%" in p.stderr
+
+
+@pytest.mark.usefixtures("dafny")
+def test_usage_guard_aborts_in_flight_entries_unrecorded(tmp_path):
+    exe, env = fake_claude(tmp_path, ["truncate_mut"])
+    # call 1 (stage 1a) reports 10%, call 2 (stage 2) reports 90% > 75% + 3% slack -> call 3 is refused
+    env.update(NFV_CLAUDE_BIN=exe, FAKE_CLAUDE_UTILIZATION="0.10,0.90")
+    out = tmp_path / "run"
+    p = nfv(["run", "--arm", "pipeline", "--backend", "claude", "--ids", "HumanEval_2/mutant,HumanEval_2/reference",
+             "--jobs", "1", "--stop-at-usage", "0.75", "--out", str(out)], env)
+    assert p.returncode == 0, p.stderr
+    assert "ABORTED (not recorded)" in p.stderr and "not starting the remaining 1 entries" in p.stderr
+    assert not (out / "results.jsonl").exists() or (out / "results.jsonl").read_text() == ""
+    assert len((tmp_path / "argv.jsonl").read_text().splitlines()) == 2   # no call after the limit

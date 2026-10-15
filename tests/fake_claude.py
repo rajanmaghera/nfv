@@ -49,6 +49,17 @@ def main() -> int:
         text = files[min(k, len(files) - 1)].read_text()
         state[stage] = k + 1
         state_path.write_text(json.dumps(state))
+    util = os.environ.get("FAKE_CLAUDE_UTILIZATION")
+    if util is not None:
+        steps = [float(x) for x in util.split(",")]
+        n_path = Path(os.environ["FAKE_CLAUDE_STATE"] + ".calls")
+        n = int(n_path.read_text()) if n_path.exists() else 0
+        n_path.write_text(str(n + 1))
+        u = steps[min(n, len(steps) - 1)]
+        print(json.dumps({"type": "system", "subtype": "init"}))
+        print(json.dumps({"type": "rate_limit_event", "rate_limit_info": {"status": "allowed", "unifiedWindows": {
+            "five_hour": {"utilization": u, "resetsAt": 1792100400},
+            "seven_day": {"utilization": 0.04, "resetsAt": 1792180800}}}}))
     print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": text,
                       "total_cost_usd": 0.0, "num_turns": 1, "session_id": "fake"}))
     return 0
