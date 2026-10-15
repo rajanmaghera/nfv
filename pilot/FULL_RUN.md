@@ -1,4 +1,52 @@
-# Full corpus: Claude Opus via `claude -p` (2026-10-09 and 2026-10-15)
+# Full corpus: Claude Opus via `claude -p`
+
+## Final numbers (2026-10-15): all 206 entries with the fixed audit parser
+
+Every entry has a fixed-parser result: 87 from 10-15 phase 1, 84 from phase 2, and 35 from phase 3
+(19:12–19:22, session usage 4% → 17%, no aborts). Records: `final-fixed/results.jsonl`.
+Settings: `--model opus --effort medium`, isolated, pipeline arm, 2 attempts × 4 rounds, 12 in parallel.
+
+Scored as in the paper (Table 3): precision counts every verdict of that kind across all 206 entries
+(e.g. a verified mutant is a wrong "verified"); recall is over the class's 103 entries.
+
+| task | population | issued | wrong | precision | recall | F1 | paper (gpt-5.6-sol, 5 × 10) |
+|---|---|---|---|---|---|---|---|
+| verification (P ⊧ S) | 103 | 98 | 5 | 94.9% | 90.3% | 0.93 | 93.5% / 69.9% / 0.80 |
+| refutation (P ⊭ S) | 103 | 100 | 4 | 96.0% | 93.2% | 0.95 | 88.7% / 45.6% / 0.60 |
+| **pipeline (refute, then verify)** | **206** | **198** | **9** | **95.5%** | **91.7%** | **0.94** | 92.2% / 57.3% / 0.71 |
+
+By library tier (paper Table 4 layout):
+
+| tier | proved | bad | prec | refuted | bad | prec |
+|---|---|---|---|---|---|---|
+| L0 | 21/22 (95%) | 0 | 100% | 21/22 (95%) | 0 | 100% |
+| L1 | 17/18 (94%) | 1 | 94% | 17/18 (94%) | 0 | 100% |
+| L2a | 31/35 (89%) | 2 | 94% | 32/35 (91%) | 2 | 94% |
+| L2b | 21/23 (91%) | 2 | 91% | 21/23 (91%) | 1 | 95% |
+| L3 | 3/5 (60%) | 0 | 100% | 5/5 (100%) | 1 | 83% |
+
+The 9 wrong verdicts:
+
+| entry | verdict | cause |
+|---|---|---|
+| HumanEval_11 reference | refuted (`a="", b="0"`) | real Python counterexample; the paper's own Table 5 entry (\|a\|=\|b\| unstated) |
+| HumanEval_111 reference | refuted (`"a ab"`) | real; the paper's Table 5 entry (tokens are single letters) |
+| HumanEval_17 reference | refuted (`" "`) | real (returns `[None, None]`) |
+| HumanEval_25 reference | refuted (`n = 1`) | real (`eval('')` raises in S) |
+| HumanEval_89 mutant | verified | stronger precondition (lowercase letters only); the mutant fails on digits |
+| HumanEval_20 mutant | verified | type erasure: list vs tuple, both `seq` |
+| HumanEval_68 mutant | verified | type erasure: returns a tuple, S requires `isinstance(rv, list)`; both `seq<int>` |
+| HumanEval_148 mutant | verified | type erasure: `isinstance(rv, tuple)` → `true`, the mutant returns a list |
+| HumanEval_128 mutant | verified | type erasure: `isinstance(rv, int)` vs a float result; int/float both `real` |
+
+All 4 false refutations are genuine Python counterexamples on inputs the docstring does not exclude. Of the
+5 unsound proofs, 4 come from erasing Python's dynamic types (list/tuple, int/float). This is the clearest
+remaining weakness, and the spec prompt's advice to translate `isinstance` checks to `true` contributes.
+
+---
+
+## History (earlier, superseded numbers)
+
 
 Settings throughout: `--model opus --effort medium`, isolated (`--safe-mode`, no tools, empty cwd), pipeline arm
 (refute, then verify), **2 attempts × 4 rounds** (the paper uses 5 × 10), 12 entries in parallel.

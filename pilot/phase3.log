@@ -1,0 +1,42 @@
+35 entries to run (0 already done) -> runs/full-opus-rerun
+usage guard: no new entries at 77% session usage, abort in-flight at 80%
+[1/35] HumanEval_71/reference (correct): refute=abstain, verify=verified [usage: five_hour 6%, seven_day 10%]
+[2/35] HumanEval_73/reference (correct): refute=abstain, verify=verified [usage: five_hour 6%, seven_day 10%]
+[3/35] HumanEval_70/reference (correct): refute=abstain, verify=verified [usage: five_hour 6%, seven_day 10%]
+[4/35] HumanEval_70/mutant (incorrect): refute=refuted [usage: five_hour 7%, seven_day 10%]
+[5/35] HumanEval_69/reference (correct): refute=abstain, verify=verified [usage: five_hour 7%, seven_day 10%]
+[6/35] HumanEval_71/mutant (incorrect): refute=refuted [usage: five_hour 8%, seven_day 11%]
+[7/35] HumanEval_77/reference (correct): refute=abstain, verify=verified [usage: five_hour 8%, seven_day 11%]
+[8/35] HumanEval_73/mutant (incorrect): refute=refuted [usage: five_hour 8%, seven_day 11%]
+[9/35] HumanEval_78/reference (correct): refute=abstain, verify=verified [usage: five_hour 8%, seven_day 11%]
+[10/35] HumanEval_69/mutant (incorrect): refute=refuted [usage: five_hour 9%, seven_day 11%]
+[11/35] HumanEval_78/mutant (incorrect): refute=refuted [usage: five_hour 9%, seven_day 11%]
+[12/35] HumanEval_79/reference (correct): refute=abstain, verify=verified [usage: five_hour 9%, seven_day 11%]
+[13/35] HumanEval_81/reference (correct): refute=abstain, verify=verified [usage: five_hour 10%, seven_day 11%]
+[14/35] HumanEval_79/mutant (incorrect): refute=refuted [usage: five_hour 9%, seven_day 11%]
+[15/35] HumanEval_77/mutant (incorrect): refute=refuted [usage: five_hour 10%, seven_day 11%]
+[16/35] HumanEval_81/mutant (incorrect): refute=refuted [usage: five_hour 10%, seven_day 11%]
+[17/35] HumanEval_86/mutant (incorrect): refute=refuted [usage: five_hour 12%, seven_day 11%]
+[18/35] HumanEval_87/reference (correct): refute=abstain, verify=verified [usage: five_hour 12%, seven_day 11%]
+[19/35] HumanEval_88/reference (correct): refute=abstain, verify=verified [usage: five_hour 12%, seven_day 11%]
+[20/35] HumanEval_88/mutant (incorrect): refute=refuted [usage: five_hour 12%, seven_day 11%]
+[21/35] HumanEval_90/mutant (incorrect): refute=refuted [usage: five_hour 13%, seven_day 11%]
+[22/35] HumanEval_97/mutant (incorrect): refute=refuted [usage: five_hour 14%, seven_day 11%]
+[23/35] HumanEval_90/reference (correct): refute=abstain, verify=verified [usage: five_hour 14%, seven_day 11%]
+[24/35] HumanEval_87/mutant (incorrect): refute=refuted [usage: five_hour 14%, seven_day 11%]
+[25/35] HumanEval_93/mutant (incorrect): refute=refuted [usage: five_hour 15%, seven_day 11%]
+[26/35] HumanEval_100/reference (correct): refute=abstain, verify=verified [usage: five_hour 16%, seven_day 11%]
+[27/35] HumanEval_97/reference (correct): refute=abstain, verify=verified [usage: five_hour 16%, seven_day 11%]
+[28/35] HumanEval_96/mutant (incorrect): refute=refuted [usage: five_hour 15%, seven_day 11%]
+[29/35] HumanEval_102/reference (correct): refute=abstain, verify=verified [usage: five_hour 16%, seven_day 11%]
+[30/35] HumanEval_100/mutant (incorrect): refute=refuted [usage: five_hour 16%, seven_day 11%]
+[31/35] HumanEval_64/reference (correct): refute=abstain, verify=abstain [usage: five_hour 16%, seven_day 11%]
+[32/35] HumanEval_68/mutant (incorrect): refute=abstain, verify=verified [usage: five_hour 16%, seven_day 11%]
+[33/35] HumanEval_67/mutant (incorrect): refute=refuted [usage: five_hour 16%, seven_day 11%]
+[34/35] HumanEval_86/reference (correct): refute=abstain, verify=verified [usage: five_hour 16%, seven_day 11%]
+[35/35] HumanEval_13/mutant (incorrect): refute=abstain, verify=abstain [usage: five_hour 17%, seven_day 11%]
+task                            population  issued  wrong  prec. (%)  rec. (%)  F1  
+------------------------------  ----------  ------  -----  ---------  --------  ----
+verify                          56          56      2      96.4       96.4      0.96
+refute                          60          60      3      95.0       95.0      0.95
+pipeline (refute, then verify)  119         116     5      95.7       93.3      0.94
