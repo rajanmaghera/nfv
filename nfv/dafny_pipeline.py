@@ -28,6 +28,7 @@ from pathlib import Path
 
 from . import dafny_artifact as A
 from . import prompts as P
+from . import trace
 from .dataset import Entry
 from .extract import clauses, extract_code, extract_labeled
 from .libdocs import library_docs
@@ -107,6 +108,8 @@ class Log:
         if detail:
             ev["detail"] = detail[:2000]
         self.result.events.append(ev)
+        trace.set_context(attempt=attempt)
+        trace.emit("event", stage=stage, status=status, round=rnd, detail=detail[:4000] if detail else None)
 
 
 class Ctx:
@@ -399,8 +402,11 @@ def _run_arm(entry: Entry, arm: str, llm: Backend, dafny: Dafny, budget: Budget,
     log = Log(res)
     ctx = Ctx(entry, llm, dafny, budget, log, artifacts_dir)
     t0 = time.monotonic()
+    trace.set_context(entry_id=entry.id, arm=arm)
+    trace.emit("arm-start", label=entry.label)
     for attempt in range(1, budget.attempts + 1):
         ctx.attempt = attempt
+        trace.set_context(attempt=attempt)
         res.attempts_used = attempt
         try:
             if body(ctx, res):
@@ -418,6 +424,8 @@ def _run_arm(entry: Entry, arm: str, llm: Backend, dafny: Dafny, budget: Budget,
     if res.verdict == ABSTAIN and res.failures:
         res.failure = res.failures[-1]
     res.seconds = round(time.monotonic() - t0, 2)
+    trace.emit("arm-end", verdict=res.verdict, witness=res.witness, failures=res.failures, seconds=res.seconds,
+               artifact=res.artifact)
     return res
 
 

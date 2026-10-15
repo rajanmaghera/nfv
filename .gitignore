@@ -5,3 +5,4 @@ __pycache__/
 runs/
 result
 result-*
+demo/*/frames/

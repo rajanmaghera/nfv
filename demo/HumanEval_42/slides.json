@@ -1,0 +1,127 @@
+[
+ {
+  "slide": 0,
+  "phases": 1,
+  "kind": "title"
+ },
+ {
+  "slide": 1,
+  "phases": 1,
+  "kind": "title"
+ },
+ {
+  "slide": 2,
+  "phases": 1,
+  "kind": "arm"
+ },
+ {
+  "slide": 3,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 4,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 5,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 6,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 7,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 8,
+  "phases": 1,
+  "kind": "verdict"
+ },
+ {
+  "slide": 9,
+  "phases": 1,
+  "kind": "arm"
+ },
+ {
+  "slide": 10,
+  "phases": 1,
+  "kind": "note"
+ },
+ {
+  "slide": 11,
+  "phases": 2,
+  "kind": "verifier"
+ },
+ {
+  "slide": 12,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 13,
+  "phases": 1,
+  "kind": "verdict"
+ },
+ {
+  "slide": 14,
+  "phases": 1,
+  "kind": "arm"
+ },
+ {
+  "slide": 15,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 16,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 17,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 18,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 19,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 20,
+  "phases": 2,
+  "kind": "verifier"
+ },
+ {
+  "slide": 21,
+  "phases": 3,
+  "kind": "llm"
+ },
+ {
+  "slide": 22,
+  "phases": 2,
+  "kind": "verifier"
+ },
+ {
+  "slide": 23,
+  "phases": 1,
+  "kind": "verdict"
+ },
+ {
+  "slide": 24,
+  "phases": 1,
+  "kind": "title"
+ }
+]

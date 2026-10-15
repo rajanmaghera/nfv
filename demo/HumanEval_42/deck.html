@@ -1,0 +1,801 @@
+<!doctype html><html><head><meta charset='utf-8'><title>NFV demo: HumanEval/42</title><style>
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2330;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
+--llm:#58a6ff;--ok:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#bc8cff}
+*{box-sizing:border-box}code,pre,.wit code{font-variant-ligatures:none;font-feature-settings:'liga' 0,'calt' 0}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;background:var(--bg);display:none;padding:0 28px}
+.slide.on{display:block}
+header{display:flex;align-items:center;justify-content:space-between;height:46px;border-bottom:1px solid var(--border);font-size:14px}
+.brand{color:var(--muted)} .brand code{color:var(--text)} .meta{color:var(--muted);font-variant-numeric:tabular-nums}
+.act{font-weight:700;padding:2px 10px;border-radius:12px;font-size:13px}.act.good{background:#12361f;color:var(--ok)}
+.act.bad{background:#3d1416;color:var(--bad)} .arm{color:var(--muted);font-size:13px;margin-left:6px}
+.tracker{display:flex;gap:6px;margin:10px 0 8px}
+.pill{flex:1;font-size:11.5px;color:var(--muted);background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:5px 7px;white-space:nowrap;overflow:hidden}
+.pill b{display:inline-block;min-width:18px;color:var(--muted);margin-right:4px}
+.pill.done{color:#9fb0c0;border-color:#24502f}.pill.done b{color:var(--ok)}
+.pill.cur{background:#132a4a;border-color:var(--llm);color:#fff}.pill.cur b{color:var(--llm)}
+.pill.skip{opacity:.3;text-decoration:line-through}
+.stagehead{display:flex;align-items:baseline;gap:12px;margin:2px 0 8px}
+.stagehead h2{white-space:nowrap;margin:0;font-size:21px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.desc{color:var(--muted);font-size:13.5px}
+.badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.05em}
+.badge.llm{background:#132a4a;color:var(--llm)}.badge.dafny{background:#12361f;color:var(--ok)}
+.cols{display:grid;grid-template-columns:1fr 1.12fr;gap:16px}
+.col{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 12px;height:470px;overflow:hidden;position:relative}
+.ptitle{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px}
+.ptitle code{text-transform:none;letter-spacing:0;color:var(--text);font-size:11.5px}
+.time{color:var(--warn);text-transform:none;letter-spacing:0}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;align-items:center}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:10px}.chip.y{background:#12361f;color:var(--ok)}
+.chip.n{background:#3d1416;color:#ff9b95}.sep{font-size:11px;color:var(--muted);margin-left:4px}
+.cap{font-size:11.5px;color:var(--muted);margin:2px 0 4px}
+pre.code{font-variant-ligatures:none;font-feature-settings:'liga' 0,'calt' 0;margin:0;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font:12.5px/1.42 'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word;overflow:hidden}
+pre.code.small{font-size:11.2px;line-height:1.36}
+pre.out{font-size:11.2px;line-height:1.35;max-height:340px}pre.okout{border-color:#24502f}pre.badout{border-color:#6e2b28}
+.k{color:#ff7b72}.s{color:#a5d6ff}.n{color:#79c0ff}.c{color:#7d8590}.c.tag{color:#d2a8ff}
+.add{background:#12361f;display:inline-block;width:100%}
+blockquote{margin:0 0 8px;padding:6px 10px;border-left:3px solid var(--llm);background:var(--panel2);font-size:13px;line-height:1.45;color:#cdd9e5;border-radius:0 6px 6px 0}
+blockquote code,.lead code,.post code,.vsub code,.armwhat code,.rules code,.desc code{font-family:'JetBrains Mono',monospace;font-size:.92em;color:#ffd8a8}
+.legend{font-size:11.5px;color:var(--muted);margin-top:6px}.addk{background:#12361f;color:var(--ok);padding:0 4px;border-radius:3px}
+.waiting{position:absolute;inset:40px 12px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--muted)}
+.waiting code{font-size:12px;color:var(--llm)}
+.spinner{width:42px;height:42px;border-radius:50%;border:4px solid #1f3b63;border-top-color:var(--llm)}
+.checks{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.chk{font-size:12.5px;padding:5px 10px;border-radius:7px;background:var(--panel);border:1px solid var(--border)}
+.chk.ok{border-color:#24502f}.chk.ok:first-letter{color:var(--ok)}.chk.bad{border-color:#6e2b28;color:#ffb3ad}
+.chk code{font-size:11.5px}
+.bigcheck{margin-top:12px;font-size:16px;font-weight:600;padding:10px 14px;border-radius:8px}
+.bigcheck.ok{background:#12361f;color:var(--ok)}.bigcheck.bad{background:#3d1416;color:#ff9b95}
+.title{padding:46px 40px 0}.kicker{color:var(--acc);font-size:14px;font-weight:600;letter-spacing:.04em}
+h1{font-size:40px;margin:8px 0 10px}.h1s{font-size:32px;margin-top:0}
+.lead{font-size:16.5px;line-height:1.5;color:#cdd9e5;max-width:1120px}.lead.small{font-size:13px;color:var(--muted)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}
+.settings{display:flex;gap:10px;flex-wrap:wrap;margin-top:44px}.settings span{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13.5px;color:var(--muted)}.settings b{color:var(--text);font-weight:600}
+.post{margin-top:14px;font-size:15px;color:var(--muted)}.post code{font-size:14px}
+.flow{display:flex;align-items:center;gap:8px;margin:30px 0 8px}
+.fbox{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 10px;text-align:center;font-size:16px}
+.fbox b{display:block;color:var(--llm);font-size:22px}.fbox small{color:var(--muted);font-size:12.5px}
+.fbox.spec{border-color:var(--warn)}.fbox.proof{border-color:var(--ok)}.arrow{color:var(--muted);font-size:22px}
+.blind{color:var(--warn);font-size:13px;margin-left:8px}
+.rules{font-size:16px;line-height:1.6;color:#cdd9e5;margin-top:26px}
+.armwrap{padding:60px 50px}.armtitle{font-size:26px}.armtitle .act{font-size:22px;padding:4px 14px}.armtitle .arm{font-size:18px}
+.armwhat{font-size:19px;color:#cdd9e5;margin:22px 0}
+.verdictwrap{display:grid;grid-template-columns:420px 1fr;gap:24px;padding-top:22px}
+.vbig{font-size:64px;font-weight:800;letter-spacing:.02em;margin-top:30px}.vbig.verified,.vbig.refuted{color:var(--ok)}
+.vbig.refuted{color:#ffa657}.vbig.abstain{color:var(--muted)}
+.vsub{font-size:17px;color:#cdd9e5;margin:10px 0 18px;line-height:1.45}.wit{font-size:16px;margin-bottom:14px}
+.wit code{font-family:'JetBrains Mono',monospace;color:#ffa657;font-size:16px}
+.label{font-size:15px;padding:8px 12px;border-radius:8px;display:inline-block}.label.ok{background:#12361f;color:var(--ok)}
+.label.bad{background:#3d1416;color:var(--bad)}.vtime{color:var(--muted);margin-top:18px;font-size:13px}
+.note{padding:120px 80px;font-size:24px;line-height:1.5;color:#cdd9e5}
+table.sum{border-collapse:collapse;font-size:15px;margin:18px 0;width:100%}
+table.sum td,table.sum th{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left}
+table.sum th{color:var(--muted);font-weight:500}.v.verified{color:var(--ok)}.v.refuted{color:#ffa657}.v.abstain{color:var(--muted)}
+.stats{display:flex;gap:14px;margin:18px 0}.stats div{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.stats b{display:block;font-size:30px}.stats span{color:var(--muted);font-size:13px}
+[data-phase],[data-only-phase]{visibility:hidden}
+.print .slide{display:block;page-break-after:always;break-after:page}
+@page{size:1280px 720px;margin:0}
+pre,pre *,code,code *{font-variant-ligatures:none!important;font-feature-settings:"liga" 0,"calt" 0,"dlig" 0!important}
+</style></head><body><section class="slide" data-phases="1" data-kind="title">
+<div class="title">
+  <div class="kicker">Neuro-formal verification (arXiv:2608.21516) · replication demo</div>
+  <h1>One benchmark entry, every call</h1>
+  <p class="lead">HumanEval/42 <code>incr_list</code>, its correct version and a buggy mutant, through the staged
+  Python → Dafny pipeline with <b>Claude Opus</b> (<code>claude -p</code>, isolated) and the <b>Dafny 4.11</b>
+  verifier. Recorded live: 12 LLM calls, 12 verifier runs.</p>
+  <div class="cols2">
+    <div><div class="cap">correct (reference)</div><pre class="code "><span class="k">def</span> incr_list(l: list):
+    <span class="k">return</span> [x + <span class="n">1</span> <span class="k">for</span> x <span class="k">in</span> l]</pre></div>
+    <div><div class="cap">buggy (mutant)</div><pre class="code "><span class="k">def</span> incr_list(l: list):
+    <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l)):
+        <span class="c"># The buggy line below adds 2 instead of 1, introducing an off-by-one error to the expected result</span>
+        l[i] += <span class="n">2</span>
+
+    <span class="k">return</span> l</pre></div>
+  </div>
+  <div class="post">postcondition S_L (both): <code>assert all((return_value[i] == l[i] + 1 for i in range(len(l))))</code></div>
+  <div class="settings"><span>model <b>claude-opus</b> · effort medium</span><span>isolation <b>--safe-mode</b>, no tools, empty cwd</span>
+  <span>budget <b>2 attempts × 4 rounds</b></span><span>verifier <b>Dafny 4.11</b> (Z3)</span><span>recorded 2026-10-15</span></div>
+</div></section><section class="slide" data-phases="1" data-kind="title">
+<div class="title">
+  <h1 class="h1s">The staged, goal-blind pipeline</h1>
+  <div class="flow">
+    <div class="fbox"><b>1a</b> Library theory<br><small>from docstrings</small></div><div class="arrow">→</div>
+    <div class="fbox"><b>2</b> Translate<br><small>tagged, line by line</small></div><div class="arrow">→</div>
+    <div class="fbox"><b>1b</b> Precondition<br><small>from the docstring</small></div><div class="arrow">→</div>
+    <div class="fbox spec"><b>3</b> Specification<br><small>S_L → S_F</small></div><div class="arrow">→</div>
+    <div class="fbox proof"><b>4</b> Proof search<br><small>ghost code only</small></div>
+  </div>
+  <div class="blind">← stages before 3 never see the property (goal-blind) →</div>
+  <ul class="rules">
+    <li>Every stage is one <code>claude -p</code> call; each answer is checked by <code>dafny resolve</code>
+        (syntax/types) and mechanical audits before the next stage runs.</li>
+    <li>Refutation reuses the same stages, negates the goal, asks for a <b>witness</b> input, and must
+        <b>prove</b> the violation, then pass a <b>reachability</b> check.</li>
+    <li>Frozen during proof search: library theory, spec, every <code>// src:</code> line and its code,
+        the contract. Only ghost code may be added, which is checked by ghost-erasure.</li>
+  </ul>
+</div></section><section class="slide" data-phases="1" data-kind="arm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+  0.0s · 3/25</div></header>
+<div class="armwrap">
+  <div class="armtitle"><span class="act good">Correct program</span> <span class="arm">refutation arm: look for a bug first</span></div>
+  <p class="armwhat">Pipeline order (paper, Table 3): first try to <b>refute</b> (find and prove a counterexample), then try to <b>verify</b> what is left.</p>
+  <pre class="code "><span class="k">def</span> incr_list(l: list):
+    <span class="k">return</span> [x + <span class="n">1</span> <span class="k">for</span> x <span class="k">in</span> l]</pre>
+  <div class="post">S_L: <code>assert all((return_value[i] == l[i] + 1 for i in range(len(l))))</code></div>
+</div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+  4.2s · 4/25</div></header><div class="tracker"><div class="pill cur"><b>1a</b>Library theory</div><div class="pill "><b>2</b>Translate</div><div class="pill "><b>1b</b>Precondition</div><div class="pill "><b>3</b>Specification</div><div class="pill "><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.theory</h2><span class="desc">Formalize the Python library surface the program calls (E_F), from the docs.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">Python source</span><span class="chip y">library docstrings</span><span class="sep">never sees:</span><span class="chip n">postcondition S_L</span></div>
+    <div class="cap">Python program (source.py)</div>
+    <pre class="code ">  <span class="n">1</span> | <span class="k">def</span> incr_list(l: list):
+  <span class="n">2</span> |     <span class="s">&quot;&quot;</span>&quot;Return list with elements incremented by <span class="n">1</span>.
+  <span class="n">3</span> |     &gt;&gt;&gt; incr_list([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])
+  <span class="n">4</span> |     [<span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+  <span class="n">5</span> |     &gt;&gt;&gt; incr_list([<span class="n">5</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">3</span>, <span class="n">9</span>, <span class="n">0</span>, <span class="n">123</span>])
+  <span class="n">6</span> |     [<span class="n">6</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">4</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">124</span>]
+  <span class="n">7</span> |     <span class="s">&quot;&quot;</span>&quot;
+  <span class="n">8</span> |     <span class="k">return</span> [x + <span class="n">1</span> <span class="k">for</span> x <span class="k">in</span> l]</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">4.2s · $0.004</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>The program uses only a list comprehension and integer addition, so it needs no library theory.</blockquote>
+      <pre class="code "><span class="c">// No library calls beyond the core language (list comprehension, integer addition).</span></pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <b>1a.theory</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 11.6s · 5/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill cur"><b>2</b>Translate</div><div class="pill "><b>1b</b>Precondition</div><div class="pill "><b>3</b>Specification</div><div class="pill "><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.translate</h2><span class="desc">Translate the program line by line into Dafny; every line tagged src:/synth:.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">Python source (numbered)</span><span class="chip y">frozen theory</span><span class="sep">never sees:</span><span class="chip n">postcondition S_L</span></div>
+    <div class="cap">Python program (source.py)</div>
+    <pre class="code ">  <span class="n">1</span> | <span class="k">def</span> incr_list(l: list):
+  <span class="n">2</span> |     <span class="s">&quot;&quot;</span>&quot;Return list with elements incremented by <span class="n">1</span>.
+  <span class="n">3</span> |     &gt;&gt;&gt; incr_list([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])
+  <span class="n">4</span> |     [<span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+  <span class="n">5</span> |     &gt;&gt;&gt; incr_list([<span class="n">5</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">3</span>, <span class="n">9</span>, <span class="n">0</span>, <span class="n">123</span>])
+  <span class="n">6</span> |     [<span class="n">6</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">4</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">124</span>]
+  <span class="n">7</span> |     <span class="s">&quot;&quot;</span>&quot;
+  <span class="n">8</span> |     <span class="k">return</span> [x + <span class="n">1</span> <span class="k">for</span> x <span class="k">in</span> l]</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">7.5s · $0.011</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>The parameter is modeled as <code>seq&lt;int&gt;</code> because the docstring examples only use integers. The list comprehension becomes an index-based <code>while</code> loop that appends <code>x + 1</code> to an accumulator.</blockquote>
+      <pre class="code "><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+{
+  <span class="c tag">// synth: translation helper, accumulator for the list comprehension</span>
+  <span class="k">var</span> result: <span class="k">seq</span>&lt;<span class="k">int</span>&gt; := [];
+  <span class="k">var</span> i: <span class="k">int</span> := 0;
+  <span class="c tag">// src: source.py:8 | return [x + 1 for x in l]</span>
+  <span class="k">while</span> i &lt; |l|
+  {
+    <span class="c tag">// src: source.py:8 | return [x + 1 for x in l]</span>
+    <span class="k">var</span> x := l[i];
+    result := result + [x + <span class="n">1</span>];
+    <span class="c tag">// synth: translation helper, loop index increment</span>
+    i := i + 1;
+  }
+  <span class="c tag">// src: source.py:8 | return [x + 1 for x in l]</span>
+  return_value := result;
+  <span class="k">return</span>;
+}</pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny resolve</code> well-formed · 0.45s</div><div class="chk ok">✓ <b>2.translate</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 17.8s · 6/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill cur"><b>1b</b>Precondition</div><div class="pill "><b>3</b>Specification</div><div class="pill "><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.precondition</h2><span class="desc">State the input assumptions the docstring makes, as `requires`.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">docstring</span><span class="chip y">signatures</span><span class="chip y">theory</span><span class="sep">never sees:</span><span class="chip n">S_L</span><span class="chip n">translation body</span></div>
+    <div class="cap">signature + docstring</div>
+    <pre class="code "><span class="k">def</span> incr_list(l: list):
+    <span class="s">&quot;&quot;</span>&quot;Return list with elements incremented by <span class="n">1</span>.
+&gt;&gt;&gt; incr_list([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])
+[<span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+&gt;&gt;&gt; incr_list([<span class="n">5</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">3</span>, <span class="n">9</span>, <span class="n">0</span>, <span class="n">123</span>])
+[<span class="n">6</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">4</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">124</span>]<span class="s">&quot;&quot;</span>&quot;</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">5.8s · $0.004</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>The docstring states no input assumptions. The empty list and any integer values are valid inputs, and Dafny <code>int</code> is unbounded, so overflow cannot occur.</blockquote>
+      <pre class="code "><span class="c">// none</span></pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny resolve</code> well-formed · 0.43s</div><div class="chk ok">✓ <b>1b.precondition</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 26.7s · 7/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill cur"><b>3</b>Specification</div><div class="pill "><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.spec</h2><span class="desc">Translate the Python postcondition S_L into Dafny `ensures` (S_F), faithfully.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">S_L</span><span class="chip y">docstring</span><span class="chip y">signatures</span><span class="chip y">theory</span><span class="sep">never sees:</span><span class="chip n">translation body</span></div>
+    <div class="cap">Python postcondition S_L</div>
+    <pre class="code "><span class="k">assert</span> <span class="k">all</span>((return_value[i] == l[i] + <span class="n">1</span> <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l))))
+
+<span class="c"># Dafny signature:</span>
+<span class="c"># method incr_list(l: seq&lt;int&gt;) returns (return_value: seq&lt;int&gt;)</span></pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">8.4s · $0.012</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>In Python, <code>return_value[i]</code> with <code>0 &lt;= i &lt; len(l)</code> raises <code>IndexError</code> if <code>return_value</code> is shorter than <code>l</code>, and the assertion then fails. So the length lower bound is part of S_L. S_L does not require the lengths to be equal: a longer <code>return_value</code> still passes.</blockquote>
+      <pre class="code "><span class="k">ensures</span> |return_value| &gt;= |l|
+<span class="k">ensures</span> <span class="k">forall</span> i :: <span class="n">0</span> &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + <span class="n">1</span></pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny resolve</code> well-formed · 0.48s</div><div class="chk ok">✓ <b>3.spec</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 32.4s · 8/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill cur"><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.witness</h2><span class="desc">Propose an input that violates S_L (or answer NONE if there is none).</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">Python source</span><span class="chip y">S_L</span><span class="chip y">precondition</span><span class="sep">never sees:</span><span class="chip n">Dafny translation body</span></div>
+    <div class="cap">Python program (source.py)</div>
+    <pre class="code ">  <span class="n">1</span> | <span class="k">def</span> incr_list(l: list):
+  <span class="n">2</span> |     <span class="s">&quot;&quot;</span>&quot;Return list with elements incremented by <span class="n">1</span>.
+  <span class="n">3</span> |     &gt;&gt;&gt; incr_list([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])
+  <span class="n">4</span> |     [<span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+  <span class="n">5</span> |     &gt;&gt;&gt; incr_list([<span class="n">5</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">3</span>, <span class="n">9</span>, <span class="n">0</span>, <span class="n">123</span>])
+  <span class="n">6</span> |     [<span class="n">6</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">4</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">124</span>]
+  <span class="n">7</span> |     <span class="s">&quot;&quot;</span>&quot;
+  <span class="n">8</span> |     <span class="k">return</span> [x + <span class="n">1</span> <span class="k">for</span> x <span class="k">in</span> l]
+
+<span class="c"># postcondition S_L</span>
+<span class="k">assert</span> <span class="k">all</span>((return_value[i] == l[i] + <span class="n">1</span> <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l))))</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">5.3s · $0.004</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>The program is correct for every input, so no counterexample exists.</blockquote>
+      <pre class="code "><span class="c">// NONE</span></pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <b>witness</b>: audits passed (provenance tags, frozen parts, no assumptions)</div><div class="chk ok">✓ <b>witness</b>: model answered NONE → refutation abstains (no proof budget spent)</div></div></section><section class="slide" data-phases="1" data-kind="verdict"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 32.4s · 9/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill done"><b>W</b>Witness</div><div class="pill done"><b>4</b>Proof search</div><div class="pill done"><b>R</b>Reachability</div><div class="pill cur"><b>✓</b>Verdict</div></div>
+<div class="verdictwrap">
+  <div class="vleft">
+    <div class="vbig abstain">ABSTAIN</div>
+    <div class="vsub">the model found no counterexample → the pipeline moves on to verification</div>
+    
+    <div class="vtime">refute arm · 32.4s wall time</div>
+  </div>
+  <div class="vright"></div>
+</div></section><section class="slide" data-phases="1" data-kind="arm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">verification arm: prove it correct</span></div><div class="meta">t+ 32.4s · 10/25</div></header>
+<div class="armwrap">
+  <div class="armtitle"><span class="act good">Correct program</span> <span class="arm">verification arm: prove it correct</span></div>
+  <p class="armwhat">Refutation found nothing, so the pipeline now tries to <b>prove</b> the program correct.</p>
+  
+  <div class="post">S_L: <code>assert all((return_value[i] == l[i] + 1 for i in range(len(l))))</code></div>
+</div></section><section class="slide" data-phases="1" data-kind="note"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">verification arm: prove it correct</span></div><div class="meta">t+ 32.4s · 11/25</div></header><div class="note">Stages 1a, 2, 1b and 3 are reused byte-identically from the refutation arm (same attempt): only the goal changes.</div></section><section class="slide" data-phases="2" data-kind="verifier"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">verification arm: prove it correct</span></div><div class="meta">t+ 33.4s · 12/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill skip"><b>W</b>Witness</div><div class="pill cur"><b>4</b>Proof search</div><div class="pill skip"><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge dafny">Dafny</span><h2>Proof attempt 0</h2><span class="desc">The harness assembles THEORY + SPEC + PROGRAM with the frozen contract and runs the verifier before asking for any proof.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">Input: artifact.dfy (PROGRAM region)</div>
+    <pre class="code small"><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+  <span class="c tag">// synth: frozen postcondition (stage 3)</span>
+  <span class="k">ensures</span> |return_value| &gt;= |l|
+  <span class="c tag">// synth: frozen postcondition (stage 3)</span>
+  <span class="k">ensures</span> <span class="k">forall</span> i :: <span class="n">0</span> &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + <span class="n">1</span>
+{
+  <span class="c tag">// synth: translation helper, accumulator for the list comprehension</span>
+  <span class="k">var</span> result: <span class="k">seq</span>&lt;<span class="k">int</span>&gt; := [];
+  <span class="k">var</span> i: <span class="k">int</span> := 0;
+  <span class="c tag">// src: source.py:8 | return [x + 1 for x in l]</span>
+  <span class="k">while</span> i &lt; |l|
+  {
+    <span class="c tag">// src: source.py:8 | return [x + 1 for x in l]</span>
+    <span class="k">var</span> x := l[i];
+    result := result + [x + <span class="n">1</span>];
+    <span class="c tag">// synth: translation helper, loop index increment</span>
+    i := i + 1;
+  }
+  <span class="c tag">// src: source.py:8 | return [x + 1 for x in l]</span>
+  return_value := result;
+  <span class="k">return</span>;
+}</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle"><code>dafny verify --allow-warnings --verification-time-limit 30 --cores 2 artifact.dfy</code> <span class="time">1.01s</span></div>
+    <div data-phase="1">
+      <pre class="code out badout">artifact.dfy(29,2): Error: a postcondition could not be proved on this return path
+   |
+29 |   return;
+   |   ^^^^^^^
+artifact.dfy(11,25): Related location: this is the postcondition that could not be proved
+   |
+11 |   ensures |return_value| &gt;= |l|
+   |                          ^^
+artifact.dfy(29,2): Error: a postcondition could not be proved on this return path
+   |
+29 |   return;
+   |   ^^^^^^^
+artifact.dfy(13,10): Related location: this is the postcondition that could not be proved
+   |
+13 |   ensures forall i :: 0 &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + 1
+   |           ^^^^^^
+Dafny program verifier finished with 1 verified, 2 errors</pre>
+      <div class="bigcheck bad">✗ not proved yet: errors go back to the model (stage 4)</div>
+    </div>
+  </div>
+</div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">verification arm: prove it correct</span></div><div class="meta">t+ 43.0s · 13/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill skip"><b>W</b>Witness</div><div class="pill cur"><b>4</b>Proof search</div><div class="pill skip"><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.proof</h2><span class="desc">Proof search: add ghost proof code only (invariants, asserts, lemmas). Everything else is frozen.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">assembled artifact</span><span class="chip y">verifier errors</span><span class="sep">never sees:</span><span class="chip n">- (may only add ghost code)</span></div>
+    <div class="cap">verifier output fed back</div>
+    <pre class="code ">artifact.dfy(<span class="n">29</span>,<span class="n">2</span>): Error: a postcondition could <span class="k">not</span> be proved on this <span class="k">return</span> path
+   |
+<span class="n">29</span> |   <span class="k">return</span>;
+   |   ^^^^^^^
+
+artifact.dfy(<span class="n">11</span>,<span class="n">25</span>): Related location: this is the postcondition that could <span class="k">not</span> be proved
+   |
+<span class="n">11</span> |   ensures |return_value| &gt;= |l|
+   |                          ^^
+
+artifact.dfy(<span class="n">29</span>,<span class="n">2</span>): Error: a postcondition could <span class="k">not</span> be proved on this <span class="k">return</span> path
+   |
+<span class="n">29</span> |   <span class="k">return</span>;
+   |   ^^^^^^^
+
+artifact.dfy(<span class="n">13</span>,<span class="n">10</span>): Related location: this is the postcondition that could <span class="k">not</span> be proved
+   |
+<span class="n">13</span> |   ensures forall i :: <span class="n">0</span> &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + <span class="n">1</span>
+   |           ^^^^^^
+
+
+Dafny program verifier finished with <span class="n">1</span> verified, <span class="n">2</span> errors</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">9.5s · $0.030</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>I added loop invariants for the index bounds, the accumulator length and the element-wise relation, plus a <code>decreases</code> clause. Together with the loop exit condition, these give both postconditions.</blockquote>
+      <pre class="code small"><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+  ⋮
+  <span class="k">while</span> i &lt; |l|
+<span class="add">    <span class="c tag">// synth: invariant</span></span>
+<span class="add">    <span class="k">invariant</span> <span class="n">0</span> &lt;= i &lt;= |l|</span>
+<span class="add">    <span class="c tag">// synth: invariant</span></span>
+<span class="add">    <span class="k">invariant</span> |result| == i</span>
+<span class="add">    <span class="c tag">// synth: invariant</span></span>
+<span class="add">    <span class="k">invariant</span> <span class="k">forall</span> j :: <span class="n">0</span> &lt;= j &lt; i ==&gt; result[j] == l[j] + <span class="n">1</span></span>
+<span class="add">    <span class="c tag">// synth: decreases</span></span>
+<span class="add">    <span class="k">decreases</span> |l| - i</span>
+  {</pre><div class="legend"><span class="addk">green</span> = lines added by proof search (8 lines, all ghost code); ⋮ = unchanged frozen code</div>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny verify</code> verified · 0.98s</div><div class="chk ok">✓ <b>4.proof</b>: proof checked</div></div></section><section class="slide" data-phases="1" data-kind="verdict"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act good">Correct program</span> <span class="arm">verification arm: prove it correct</span></div><div class="meta">t+ 43.9s · 14/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill skip"><b>W</b>Witness</div><div class="pill done"><b>4</b>Proof search</div><div class="pill skip"><b>R</b>Reachability</div><div class="pill cur"><b>✓</b>Verdict</div></div>
+<div class="verdictwrap">
+  <div class="vleft">
+    <div class="vbig verified">VERIFIED</div>
+    <div class="vsub">machine-checked proof that the program satisfies S_F under E_F</div>
+    <div class="label ok">ground-truth label: correct → correct verdict</div>
+    <div class="vtime">verify arm · 11.5s wall time</div>
+  </div>
+  <div class="vright"><pre class="code small"><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+  <span class="c tag">// synth: frozen postcondition (stage 3)</span>
+  <span class="k">ensures</span> |return_value| &gt;= |l|
+  <span class="c tag">// synth: frozen postcondition (stage 3)</span>
+  <span class="k">ensures</span> <span class="k">forall</span> i :: <span class="n">0</span> &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + <span class="n">1</span>
+{
+  <span class="c tag">// synth: translation helper, accumulator for the list comprehension</span>
+  <span class="k">var</span> result: <span class="k">seq</span>&lt;<span class="k">int</span>&gt; := [];
+  <span class="k">var</span> i: <span class="k">int</span> := 0;
+  <span class="c tag">// src: source.py:8 | return [x + 1 for x in l]</span>
+  <span class="k">while</span> i &lt; |l|
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> <span class="n">0</span> &lt;= i &lt;= |l|
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> |result| == i
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> <span class="k">forall</span> j :: <span class="n">0</span> &lt;= j &lt; i ==&gt; result[j] == l[j] + <span class="n">1</span>
+    <span class="c tag">// synth: decreases</span>
+    <span class="k">decreases</span> |l| - i
+  {
+    <span class="c tag">// src: source.py:8 | return [x + 1 for x in l]</span>
+    <span class="k">var</span> x := l[i];
+    result := result + [x + <span class="n">1</span>];
+    <span class="c tag">// synth: translation helper, loop index increment</span>
+    i := i + 1;
+  }
+<span class="c">… 4 more lines</span></pre></div>
+</div></section><section class="slide" data-phases="1" data-kind="arm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 43.9s · 15/25</div></header>
+<div class="armwrap">
+  <div class="armtitle"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div>
+  <p class="armwhat">Pipeline order (paper, Table 3): first try to <b>refute</b> (find and prove a counterexample), then try to <b>verify</b> what is left.</p>
+  <pre class="code "><span class="k">def</span> incr_list(l: list):
+    <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l)):
+        <span class="c"># The buggy line below adds 2 instead of 1, introducing an off-by-one error to the expected result</span>
+        l[i] += <span class="n">2</span>
+
+    <span class="k">return</span> l</pre>
+  <div class="post">S_L: <code>assert all((return_value[i] == l[i] + 1 for i in range(len(l))))</code></div>
+</div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 49.9s · 16/25</div></header><div class="tracker"><div class="pill cur"><b>1a</b>Library theory</div><div class="pill "><b>2</b>Translate</div><div class="pill "><b>1b</b>Precondition</div><div class="pill "><b>3</b>Specification</div><div class="pill "><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.theory</h2><span class="desc">Formalize the Python library surface the program calls (E_F), from the docs.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">Python source</span><span class="chip y">library docstrings</span><span class="sep">never sees:</span><span class="chip n">postcondition S_L</span></div>
+    <div class="cap">Python program (source.py)</div>
+    <pre class="code ">  <span class="n">1</span> | <span class="k">def</span> incr_list(l: list):
+  <span class="n">2</span> |     <span class="s">&quot;&quot;</span>&quot;Return list with elements incremented by <span class="n">1</span>.
+  <span class="n">3</span> |     &gt;&gt;&gt; incr_list([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])
+  <span class="n">4</span> |     [<span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+  <span class="n">5</span> |     &gt;&gt;&gt; incr_list([<span class="n">5</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">3</span>, <span class="n">9</span>, <span class="n">0</span>, <span class="n">123</span>])
+  <span class="n">6</span> |     [<span class="n">6</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">4</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">124</span>]
+  <span class="n">7</span> |     <span class="s">&quot;&quot;</span>&quot;
+  <span class="n">8</span> | 
+  <span class="n">9</span> |     <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l)):
+ <span class="n">10</span> |         <span class="c"># The buggy line below adds 2 instead of 1, introducing an off-by-one error to the expected result</span>
+ <span class="n">11</span> |         l[i] += <span class="n">2</span>
+ <span class="n">12</span> | 
+ <span class="n">13</span> |     <span class="k">return</span> l</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">6.0s · $0.006</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>The program calls only <code>len</code> and <code>range</code>, indexes and assigns list elements, and adds integers. These map directly to Dafny&#x27;s <code>|s|</code>, quantification over indices, sequence update and <code>int</code> arithmetic. Under the stage rules, the theory is therefore empty.</blockquote>
+      <pre class="code "><span class="c">// The program uses only len, range, list indexing and integer addition; no library theory is required.</span></pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <b>1a.theory</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 58.6s · 17/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill cur"><b>2</b>Translate</div><div class="pill "><b>1b</b>Precondition</div><div class="pill "><b>3</b>Specification</div><div class="pill "><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.translate</h2><span class="desc">Translate the program line by line into Dafny; every line tagged src:/synth:.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">Python source (numbered)</span><span class="chip y">frozen theory</span><span class="sep">never sees:</span><span class="chip n">postcondition S_L</span></div>
+    <div class="cap">Python program (source.py)</div>
+    <pre class="code ">  <span class="n">1</span> | <span class="k">def</span> incr_list(l: list):
+  <span class="n">2</span> |     <span class="s">&quot;&quot;</span>&quot;Return list with elements incremented by <span class="n">1</span>.
+  <span class="n">3</span> |     &gt;&gt;&gt; incr_list([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])
+  <span class="n">4</span> |     [<span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+  <span class="n">5</span> |     &gt;&gt;&gt; incr_list([<span class="n">5</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">3</span>, <span class="n">9</span>, <span class="n">0</span>, <span class="n">123</span>])
+  <span class="n">6</span> |     [<span class="n">6</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">4</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">124</span>]
+  <span class="n">7</span> |     <span class="s">&quot;&quot;</span>&quot;
+  <span class="n">8</span> | 
+  <span class="n">9</span> |     <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l)):
+ <span class="n">10</span> |         <span class="c"># The buggy line below adds 2 instead of 1, introducing an off-by-one error to the expected result</span>
+ <span class="n">11</span> |         l[i] += <span class="n">2</span>
+ <span class="n">12</span> | 
+ <span class="n">13</span> |     <span class="k">return</span> l</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">8.7s · $0.026</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>This keeps the source&#x27;s <code>+= 2</code> exactly as written; it does not fix the docstring&#x27;s expected <code>+1</code>. Python mutates the caller&#x27;s list in place, but this is modeled as a value-semantics <code>seq</code> returned as <code>return_value</code>.</blockquote>
+      <pre class="code "><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+{
+  <span class="c tag">// synth: declaration, mutable local copy of the list parameter (Python mutates l in place)</span>
+  <span class="k">var</span> l&#x27; := l;
+  <span class="c tag">// src: source.py:9 | for i in range(len(l)):</span>
+  <span class="k">var</span> n := |l&#x27;|;
+  <span class="k">var</span> i := 0;
+  <span class="k">while</span> i &lt; n
+  {
+    <span class="c tag">// src: source.py:11 | l[i] += 2</span>
+    l<span class="s">&#x27; := l&#x27;</span>[i := l&#x27;[i] + <span class="n">2</span>];
+    <span class="c tag">// synth: loop increment, for the range iteration</span>
+    i := i + 1;
+  }
+  <span class="c tag">// src: source.py:13 | return l</span>
+  return_value := l&#x27;;
+}</pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny resolve</code> well-formed · 0.44s</div><div class="chk ok">✓ <b>2.translate</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 63.3s · 18/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill cur"><b>1b</b>Precondition</div><div class="pill "><b>3</b>Specification</div><div class="pill "><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.precondition</h2><span class="desc">State the input assumptions the docstring makes, as `requires`.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">docstring</span><span class="chip y">signatures</span><span class="chip y">theory</span><span class="sep">never sees:</span><span class="chip n">S_L</span><span class="chip n">translation body</span></div>
+    <div class="cap">signature + docstring</div>
+    <pre class="code "><span class="k">def</span> incr_list(l: list):
+    <span class="s">&quot;&quot;</span>&quot;Return list with elements incremented by <span class="n">1</span>.
+&gt;&gt;&gt; incr_list([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])
+[<span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+&gt;&gt;&gt; incr_list([<span class="n">5</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">3</span>, <span class="n">9</span>, <span class="n">0</span>, <span class="n">123</span>])
+[<span class="n">6</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">4</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">124</span>]<span class="s">&quot;&quot;</span>&quot;</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">4.3s · $0.010</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>The docstring states no input assumptions. Any list of integers, including the empty list, is valid input.</blockquote>
+      <pre class="code "><span class="c">// none</span></pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny resolve</code> well-formed · 0.45s</div><div class="chk ok">✓ <b>1b.precondition</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 70.6s · 19/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill cur"><b>3</b>Specification</div><div class="pill "><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.spec</h2><span class="desc">Translate the Python postcondition S_L into Dafny `ensures` (S_F), faithfully.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">S_L</span><span class="chip y">docstring</span><span class="chip y">signatures</span><span class="chip y">theory</span><span class="sep">never sees:</span><span class="chip n">translation body</span></div>
+    <div class="cap">Python postcondition S_L</div>
+    <pre class="code "><span class="k">assert</span> <span class="k">all</span>((return_value[i] == l[i] + <span class="n">1</span> <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l))))
+
+<span class="c"># Dafny signature:</span>
+<span class="c"># method incr_list(l: seq&lt;int&gt;) returns (return_value: seq&lt;int&gt;)</span></pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">6.9s · $0.021</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>The first clause is needed because the Python assertion raises <code>IndexError</code> (and so fails) if <code>return_value</code> is shorter than <code>l</code>. The assertion says nothing about extra trailing elements, so a longer result is not ruled out.</blockquote>
+      <pre class="code "><span class="k">ensures</span> |return_value| &gt;= |l|
+<span class="k">ensures</span> <span class="k">forall</span> i :: <span class="n">0</span> &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + <span class="n">1</span></pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny resolve</code> well-formed · 0.47s</div><div class="chk ok">✓ <b>3.spec</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 78.0s · 20/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill cur"><b>W</b>Witness</div><div class="pill "><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.witness</h2><span class="desc">Propose an input that violates S_L (or answer NONE if there is none).</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">Python source</span><span class="chip y">S_L</span><span class="chip y">precondition</span><span class="sep">never sees:</span><span class="chip n">Dafny translation body</span></div>
+    <div class="cap">Python program (source.py)</div>
+    <pre class="code ">  <span class="n">1</span> | <span class="k">def</span> incr_list(l: list):
+  <span class="n">2</span> |     <span class="s">&quot;&quot;</span>&quot;Return list with elements incremented by <span class="n">1</span>.
+  <span class="n">3</span> |     &gt;&gt;&gt; incr_list([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])
+  <span class="n">4</span> |     [<span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
+  <span class="n">5</span> |     &gt;&gt;&gt; incr_list([<span class="n">5</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">3</span>, <span class="n">9</span>, <span class="n">0</span>, <span class="n">123</span>])
+  <span class="n">6</span> |     [<span class="n">6</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">4</span>, <span class="n">10</span>, <span class="n">1</span>, <span class="n">124</span>]
+  <span class="n">7</span> |     <span class="s">&quot;&quot;</span>&quot;
+  <span class="n">8</span> | 
+  <span class="n">9</span> |     <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l)):
+ <span class="n">10</span> |         <span class="c"># The buggy line below adds 2 instead of 1, introducing an off-by-one error to the expected result</span>
+ <span class="n">11</span> |         l[i] += <span class="n">2</span>
+ <span class="n">12</span> | 
+ <span class="n">13</span> |     <span class="k">return</span> l
+
+<span class="c"># postcondition S_L</span>
+<span class="k">assert</span> <span class="k">all</span>((return_value[i] == l[i] + <span class="n">1</span> <span class="k">for</span> i <span class="k">in</span> <span class="k">range</span>(<span class="k">len</span>(l))))</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">6.8s · $0.020</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>On this input the function returns <code>[3]</code>, but S_L requires <code>[2]</code>. In the Python version the list is mutated in place, so <code>return_value[i] == l[i]</code> and <code>l[i] + 1</code> can never equal it. In the Dafny model <code>l</code> is immutable, so the result is <code>l[i] + 2</code>, which is never <code>l[i] + 1</code>. So the postcondition fails for any non-empty list.</blockquote>
+      <pre class="code "><span class="k">requires</span> l == [<span class="n">1</span>]</pre>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny resolve</code> well-formed · 0.48s</div><div class="chk ok">✓ <b>witness</b>: audits passed (provenance tags, frozen parts, no assumptions)</div></div></section><section class="slide" data-phases="2" data-kind="verifier"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 79.4s · 21/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill done"><b>W</b>Witness</div><div class="pill cur"><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge dafny">Dafny</span><h2>Proof attempt 0</h2><span class="desc">The harness assembles THEORY + SPEC + PROGRAM with the frozen contract and runs the verifier before asking for any proof.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">Input: artifact.dfy (PROGRAM region)</div>
+    <pre class="code small"><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+  <span class="c tag">// synth: witness (refutation)</span>
+  <span class="k">requires</span> l == [<span class="n">1</span>]
+  <span class="c tag">// synth: frozen negated postcondition (refutation)</span>
+  <span class="k">ensures</span> !((|return_value| &gt;= |l|) &amp;&amp; (<span class="k">forall</span> i :: <span class="n">0</span> &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + <span class="n">1</span>))
+{
+  <span class="c tag">// synth: declaration, mutable local copy of the list parameter (Python mutates l in place)</span>
+  <span class="k">var</span> l&#x27; := l;
+  <span class="c tag">// src: source.py:9 | for i in range(len(l)):</span>
+  <span class="k">var</span> n := |l&#x27;|;
+  <span class="k">var</span> i := 0;
+  <span class="k">while</span> i &lt; n
+  {
+    <span class="c tag">// src: source.py:11 | l[i] += 2</span>
+    l<span class="s">&#x27; := l&#x27;</span>[i := l&#x27;[i] + <span class="n">2</span>];
+    <span class="c tag">// synth: loop increment, for the range iteration</span>
+    i := i + 1;
+  }
+  <span class="c tag">// src: source.py:13 | return l</span>
+  return_value := l&#x27;;
+}</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle"><code>dafny verify --allow-warnings --verification-time-limit 30 --cores 2 artifact.dfy</code> <span class="time">1.00s</span></div>
+    <div data-phase="1">
+      <pre class="code out badout">artifact.dfy(14,0): Error: a postcondition could not be proved on this return path
+   |
+14 | {
+   | ^
+artifact.dfy(13,10): Related location: this is the postcondition that could not be proved
+   |
+13 |   ensures !((|return_value| &gt;= |l|) &amp;&amp; (forall i :: 0 &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + 1))
+   |           ^
+artifact.dfy(23,13): Error: index out of range
+   |
+23 |     l&#x27; := l&#x27;[i := l&#x27;[i] + 2];
+   |              ^
+Dafny program verifier finished with 1 verified, 2 errors</pre>
+      <div class="bigcheck bad">✗ not proved yet: errors go back to the model (stage 4)</div>
+    </div>
+  </div>
+</div></section><section class="slide" data-phases="3" data-kind="llm"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 87.9s · 22/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill done"><b>W</b>Witness</div><div class="pill cur"><b>4</b>Proof search</div><div class="pill "><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge llm">LLM call</span><h2>dafny.refute.proof</h2><span class="desc">Prove the NEGATED postcondition on the witness input. Code and goal are frozen.</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">What this stage sees</div>
+    <div class="chips"><span class="chip y">assembled artifact</span><span class="chip y">verifier errors</span><span class="sep">never sees:</span><span class="chip n">- (may only add ghost code)</span></div>
+    <div class="cap">verifier output fed back</div>
+    <pre class="code ">artifact.dfy(<span class="n">14</span>,<span class="n">0</span>): Error: a postcondition could <span class="k">not</span> be proved on this <span class="k">return</span> path
+   |
+<span class="n">14</span> | {
+   | ^
+
+artifact.dfy(<span class="n">13</span>,<span class="n">10</span>): Related location: this is the postcondition that could <span class="k">not</span> be proved
+   |
+<span class="n">13</span> |   ensures !((|return_value| &gt;= |l|) &amp;&amp; (forall i :: <span class="n">0</span> &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + <span class="n">1</span>))
+   |           ^
+
+artifact.dfy(<span class="n">23</span>,<span class="n">13</span>): Error: index out of <span class="k">range</span>
+   |
+<span class="n">23</span> |     l<span class="s">&#x27; := l&#x27;</span>[i := l&#x27;[i] + <span class="n">2</span>];
+   |              ^
+
+
+Dafny program verifier finished with <span class="n">1</span> verified, <span class="n">2</span> errors</pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle">Opus answers <span class="time">8.5s · $0.034</span></div>
+    <div class="waiting" data-only-phase="0"><div class="spinner"></div><code>claude -p --model opus --effort medium --safe-mode --tools &quot;&quot; (prompt on stdin)</code></div>
+    <div data-phase="1">
+      <blockquote>The loop needed invariants for the length and element values; the final asserts then show <code>return_value[0] == 3 != 2 == l[0] + 1</code>.</blockquote>
+      <pre class="code small"><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+  ⋮
+  <span class="k">while</span> i &lt; n
+<span class="add">    <span class="c tag">// synth: invariant</span></span>
+<span class="add">    <span class="k">invariant</span> <span class="n">0</span> &lt;= i &lt;= n</span>
+<span class="add">    <span class="c tag">// synth: invariant</span></span>
+<span class="add">    <span class="k">invariant</span> n == |l&#x27;| == |l|</span>
+<span class="add">    <span class="c tag">// synth: invariant</span></span>
+<span class="add">    <span class="k">invariant</span> <span class="k">forall</span> j :: <span class="n">0</span> &lt;= j &lt; i ==&gt; l&#x27;[j] == l[j] + <span class="n">2</span></span>
+<span class="add">    <span class="c tag">// synth: invariant</span></span>
+<span class="add">    <span class="k">invariant</span> <span class="k">forall</span> j :: i &lt;= j &lt; n ==&gt; l&#x27;[j] == l[j]</span>
+<span class="add">    <span class="c tag">// synth: decreases</span></span>
+<span class="add">    <span class="k">decreases</span> n - i</span>
+  {
+  ⋮
+  return_value := l&#x27;;
+<span class="add">  <span class="c tag">// synth: proof</span></span>
+<span class="add">  <span class="k">assert</span> return_value[<span class="n">0</span>] == 3;</span>
+<span class="add">  <span class="c tag">// synth: proof</span></span>
+  ⋮ (<span class="n">14</span> lines added in total)</pre><div class="legend"><span class="addk">green</span> = lines added by proof search (14 lines, all ghost code); ⋮ = unchanged frozen code</div>
+    </div>
+  </div>
+</div>
+<div class="checks" data-phase="2"><div class="chk ok">✓ <code>dafny verify</code> verified · 0.97s</div><div class="chk ok">✓ <b>4.proof</b>: proof checked</div></div></section><section class="slide" data-phases="2" data-kind="verifier"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 89.9s · 23/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill done"><b>W</b>Witness</div><div class="pill done"><b>4</b>Proof search</div><div class="pill cur"><b>R</b>Reachability</div><div class="pill "><b>✓</b>Verdict</div></div>
+<div class="stagehead"><span class="badge dafny">Dafny</span><h2>Reachability check</h2><span class="desc">The proved artifact again, with the goal replaced by <code>ensures false</code>. It must NOT verify, otherwise the witness would be vacuous (contradicting the precondition).</span></div>
+<div class="cols">
+  <div class="col left">
+    <div class="ptitle">Input: artifact.dfy (PROGRAM region)</div>
+    <pre class="code small"><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+  <span class="c tag">// synth: witness (refutation)</span>
+  <span class="k">requires</span> l == [<span class="n">1</span>]
+  <span class="c tag">// synth: frozen negated postcondition (refutation)</span>
+  <span class="k">ensures</span> <span class="k">false</span>
+{
+  <span class="c tag">// synth: declaration, mutable local copy of the list parameter (Python mutates l in place)</span>
+  <span class="k">var</span> l&#x27; := l;
+  <span class="c tag">// src: source.py:9 | for i in range(len(l)):</span>
+  <span class="k">var</span> n := |l&#x27;|;
+  <span class="k">var</span> i := 0;
+  <span class="k">while</span> i &lt; n
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> <span class="n">0</span> &lt;= i &lt;= n
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> n == |l&#x27;| == |l|
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> <span class="k">forall</span> j :: <span class="n">0</span> &lt;= j &lt; i ==&gt; l&#x27;[j] == l[j] + <span class="n">2</span>
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> <span class="k">forall</span> j :: i &lt;= j &lt; n ==&gt; l&#x27;[j] == l[j]
+    <span class="c tag">// synth: decreases</span>
+    <span class="k">decreases</span> n - i
+  {
+    <span class="c tag">// src: source.py:11 | l[i] += 2</span>
+<span class="c">… 9 more lines</span></pre>
+  </div>
+  <div class="col right">
+    <div class="ptitle"><code>dafny verify --allow-warnings --verification-time-limit 30 --cores 2 artifact.dfy</code> <span class="time">0.99s</span></div>
+    <div data-phase="1">
+      <pre class="code out badout">artifact.dfy(14,0): Error: a postcondition could not be proved on this return path
+   |
+14 | {
+   | ^
+artifact.dfy(13,10): Related location: this is the postcondition that could not be proved
+   |
+13 |   ensures false
+   |           ^^^^^
+Dafny program verifier finished with 0 verified, 1 error</pre>
+      <div class="bigcheck ok">✓ fails as required: the witness is a real, reachable input</div>
+    </div>
+  </div>
+</div></section><section class="slide" data-phases="1" data-kind="verdict"><header><div class="brand">NFV · HumanEval/42 <code>incr_list</code></div><div class="mid"><span class="act bad">Buggy program</span> <span class="arm">refutation arm: look for a bug first</span></div><div class="meta">t+ 89.9s · 24/25</div></header><div class="tracker"><div class="pill done"><b>1a</b>Library theory</div><div class="pill done"><b>2</b>Translate</div><div class="pill done"><b>1b</b>Precondition</div><div class="pill done"><b>3</b>Specification</div><div class="pill done"><b>W</b>Witness</div><div class="pill done"><b>4</b>Proof search</div><div class="pill done"><b>R</b>Reachability</div><div class="pill cur"><b>✓</b>Verdict</div></div>
+<div class="verdictwrap">
+  <div class="vleft">
+    <div class="vbig refuted">REFUTED</div>
+    <div class="vsub">machine-checked proof that the program violates S_F on the witness</div>
+    <div class="wit">witness: <code>l == [1]</code></div><div class="label ok">ground-truth label: incorrect → correct verdict</div>
+    <div class="vtime">refute arm · 46.0s wall time</div>
+  </div>
+  <div class="vright"><pre class="code small"><span class="c tag">// src: source.py:1 | def incr_list(l: list):</span>
+<span class="k">method</span> incr_list(l: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;) <span class="k">returns</span> (return_value: <span class="k">seq</span>&lt;<span class="k">int</span>&gt;)
+  <span class="c tag">// synth: witness (refutation)</span>
+  <span class="k">requires</span> l == [<span class="n">1</span>]
+  <span class="c tag">// synth: frozen negated postcondition (refutation)</span>
+  <span class="k">ensures</span> !((|return_value| &gt;= |l|) &amp;&amp; (<span class="k">forall</span> i :: <span class="n">0</span> &lt;= i &lt; |l| ==&gt; return_value[i] == l[i] + <span class="n">1</span>))
+{
+  <span class="c tag">// synth: declaration, mutable local copy of the list parameter (Python mutates l in place)</span>
+  <span class="k">var</span> l&#x27; := l;
+  <span class="c tag">// src: source.py:9 | for i in range(len(l)):</span>
+  <span class="k">var</span> n := |l&#x27;|;
+  <span class="k">var</span> i := 0;
+  <span class="k">while</span> i &lt; n
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> <span class="n">0</span> &lt;= i &lt;= n
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> n == |l&#x27;| == |l|
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> <span class="k">forall</span> j :: <span class="n">0</span> &lt;= j &lt; i ==&gt; l&#x27;[j] == l[j] + <span class="n">2</span>
+    <span class="c tag">// synth: invariant</span>
+    <span class="k">invariant</span> <span class="k">forall</span> j :: i &lt;= j &lt; n ==&gt; l&#x27;[j] == l[j]
+    <span class="c tag">// synth: decreases</span>
+    <span class="k">decreases</span> n - i
+  {
+    <span class="c tag">// src: source.py:11 | l[i] += 2</span>
+    l<span class="s">&#x27; := l&#x27;</span>[i := l&#x27;[i] + <span class="n">2</span>];
+    <span class="c tag">// synth: loop increment, for the range iteration</span>
+<span class="c">… 9 more lines</span></pre></div>
+</div></section><section class="slide" data-phases="1" data-kind="title">
+<div class="title">
+  <h1 class="h1s">Result: both verdicts correct, both machine-checked</h1>
+  <table class="sum"><tr><th>entry</th><th>arm</th><th>verdict</th><th>witness</th><th>time</th></tr><tr><td>HumanEval_42/reference</td><td>refute</td><td class='v abstain'>abstain</td><td><code></code></td><td>32.4s</td></tr><tr><td>HumanEval_42/reference</td><td>verify</td><td class='v verified'>verified</td><td><code></code></td><td>11.5s</td></tr><tr><td>HumanEval_42/mutant</td><td>refute</td><td class='v refuted'>refuted</td><td><code>l == [1]</code></td><td>46.0s</td></tr></table>
+  <div class="stats">
+    <div><b>12</b><span>LLM calls</span></div>
+    <div><b>82s</b><span>model time</span></div>
+    <div><b>12</b><span>Dafny runs</span></div>
+    <div><b>8.2s</b><span>verifier time</span></div>
+    <div><b>$0.18</b><span>list-price cost</span></div>
+  </div>
+  <p class="lead small">Full trace with every prompt, response and verifier output: <code>demo/HumanEval_42/trace.md</code>
+  · raw: <code>demo/HumanEval_42/run/trace.jsonl</code> · reproduce: <code>nfv run --arm pipeline --tasks 42 --trace</code></p>
+</div></section><script>
+function show(){
+  const print = location.search.includes('print');
+  const slides=[...document.querySelectorAll('.slide')];
+  if(print){document.body.classList.add('print');
+    slides.forEach(s=>{s.querySelectorAll('[data-phase]').forEach(e=>e.style.visibility='visible');
+                       s.querySelectorAll('[data-only-phase]').forEach(e=>e.style.display='none');});return;}
+  const h=new URLSearchParams(location.hash.slice(1)); const n=+(h.get('s')||0), p=+(h.get('p')||9);
+  slides.forEach((s,i)=>s.classList.toggle('on',i===n));
+  const s=slides[n]; if(!s) return;
+  s.querySelectorAll('[data-phase]').forEach(e=>e.style.visibility=(+e.dataset.phase<=p)?'visible':'hidden');
+  s.querySelectorAll('[data-only-phase]').forEach(e=>e.style.visibility=(+e.dataset.onlyPhase===p)?'visible':'hidden');
+}
+window.addEventListener('hashchange',show);
+document.addEventListener('keydown',e=>{const h=new URLSearchParams(location.hash.slice(1));let n=+(h.get('s')||0);
+  const N=document.querySelectorAll('.slide').length; if(e.key==='ArrowRight')n=Math.min(N-1,n+1); if(e.key==='ArrowLeft')n=Math.max(0,n-1);
+  location.hash='s='+n+'&p=9';});
+show();
+</script></body></html>

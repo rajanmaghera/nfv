@@ -43,6 +43,17 @@
           '';
         };
 
+        # `nix develop .#demo`: render a traced run into an animated GIF + PDF (scripts/render_demo.py).
+        demo = pkgs.mkShell {
+          packages = [ (pkgs.python3.withPackages (ps: [ ps.pytest ps.pillow ])) pkgs.chromium ];
+          FONTCONFIG_FILE = pkgs.makeFontsConf {
+            fontDirectories = [ pkgs.inter pkgs.jetbrains-mono pkgs.dejavu_fonts ];
+          };
+          shellHook = ''
+            export PYTHONPATH="$PWD''${PYTHONPATH:+:$PYTHONPATH}"
+          '';
+        };
+
         # `nix develop .#local-llm`: adds llama.cpp (llama-server) to serve a local model over an
         # OpenAI-compatible API, e.g. `llama-server -m model.gguf --port 8080 -c 32768`.
         local-llm = pkgs.mkShell {

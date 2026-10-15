@@ -84,7 +84,8 @@ python3 -m nfv prompt theory HumanEval_133/reference   # inspect a stage prompt,
 python3 -m nfv show HumanEval_2/mutant
 ```
 
-A run directory holds `config.json`, `results.jsonl` (one record per entry and arm: verdict,
+`--trace` additionally writes `trace.jsonl` with every LLM call, verifier run and pipeline event, in order
+(see [`demo/`](demo/README.md) for an animated walkthrough built from one). A run directory holds `config.json`, `results.jsonl` (one record per entry and arm: verdict,
 failures per attempt, witness, final artifact, event log), `transcript.jsonl` (every prompt and
 response; `--backend replay:<file>` replays it) and `artifacts/<entry>/<arm>/attempt_k/*.dfy|*.c`.
 Runs can be resumed: entries already in `results.jsonl` are skipped (pass `--fresh` to redo them).
@@ -203,5 +204,7 @@ nfv/libdocs.py              E_nl: runtime docstrings of the library surface
 nfv/cli.py                  `python -m nfv ...`
 tests/                      smoke tests + sample LLM outputs
 pilot/                      Claude Opus pilot runs (results, transcripts) and findings
+demo/                       one entry traced end to end: animated GIF, PDF deck, full call dump
+scripts/{dump_trace,make_demo,render_demo}.py   trace -> markdown dump / slide deck / GIF + PDF
 scripts/run_stats.py        per-entry calls / cost / events of a run
 ```

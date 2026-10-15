@@ -15,6 +15,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import trace
+
 
 def which(env: str, name: str) -> str | None:
     return os.environ.get(env) or shutil.which(name)
@@ -112,9 +114,13 @@ class Dafny:
                 return DafnyResult(False, -1, out, timed_out=True, seconds=time.monotonic() - t0)
         out = proc.stdout + proc.stderr
         diags, verified, errors = parse_dafny_output(out)
-        return DafnyResult(ok=proc.returncode == 0, exit_code=proc.returncode, output=out, diags=diags,
-                           verified=verified, errors=errors, timed_out="timed out" in out,
-                           seconds=time.monotonic() - t0)
+        res = DafnyResult(ok=proc.returncode == 0, exit_code=proc.returncode, output=out, diags=diags,
+                          verified=verified, errors=errors, timed_out="timed out" in out,
+                          seconds=time.monotonic() - t0)
+        trace.emit("verifier", tool="dafny", command=f"dafny {cmd} {' '.join(args)} artifact.dfy", input=code,
+                   output=out, exit_code=proc.returncode, ok=res.ok and not res.error_diags,
+                   verified=verified, errors=errors, seconds=round(res.seconds, 2))
+        return res
 
     def resolve(self, code: str) -> DafnyResult:
         # warnings are surfaced (and the audit rejects axiom warnings), not fatal here

@@ -370,6 +370,9 @@ class Transcript(Backend):
 
     def complete(self, prompt: str, *, system: str | None = None) -> Completion:
         c = self.inner.complete(prompt, system=system)
+        from . import trace
+        trace.emit("llm", stage=c.stage, prompt=prompt, system=system, response=c.text, seconds=round(c.seconds, 2),
+                   cost_usd=(c.meta or {}).get("total_cost_usd"), backend=self.name)
         rec = {**self.context, "stage": c.stage, "seconds": round(c.seconds, 3), "prompt": prompt,
                "system": system, "response": c.text, "meta": c.meta}
         with self._lock, open(self.path, "a") as fh:

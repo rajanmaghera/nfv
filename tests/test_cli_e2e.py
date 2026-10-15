@@ -88,3 +88,23 @@ def test_usage_guard_aborts_in_flight_entries_unrecorded(tmp_path):
     assert "ABORTED (not recorded)" in p.stderr and "not starting the remaining 1 entries" in p.stderr
     assert not (out / "results.jsonl").exists() or (out / "results.jsonl").read_text() == ""
     assert len((tmp_path / "argv.jsonl").read_text().splitlines()) == 2   # no call after the limit
+
+
+@pytest.mark.usefixtures("dafny")
+def test_trace_records_llm_calls_verifier_runs_and_events(tmp_path):
+    exe, env = fake_claude(tmp_path, ["truncate_mut"])
+    env["NFV_CLAUDE_BIN"] = exe
+    out = tmp_path / "run"
+    p = nfv(["run", "--arm", "pipeline", "--backend", "claude", "--ids", "HumanEval_2/mutant", "--attempts", "1",
+             "--rounds", "1", "--trace", "--out", str(out)], env)
+    assert p.returncode == 0, p.stderr
+    recs = [json.loads(l) for l in (out / "trace.jsonl").read_text().splitlines()]
+    kinds = [r["kind"] for r in recs]
+    assert kinds[0] == "arm-start" and kinds[-1] == "arm-end" and recs[-1]["verdict"] == "refuted"
+    llm = [r for r in recs if r["kind"] == "llm"]
+    assert [r["stage"] for r in llm] == ["dafny.theory", "dafny.translate", "dafny.precondition", "dafny.spec",
+                                         "dafny.witness"]
+    ver = [r for r in recs if r["kind"] == "verifier"]
+    assert ver and all("artifact.dfy" in r["command"] and r["input"] for r in ver)
+    assert all(r["entry_id"] == "HumanEval_2/mutant" for r in recs)
+    assert [r["seq"] for r in recs] == list(range(1, len(recs) + 1))

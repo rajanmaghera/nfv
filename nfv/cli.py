@@ -118,9 +118,13 @@ def cmd_run(args) -> int:
         print("cbmc not found (run inside `nix develop`, or set NFV_CBMC)", file=sys.stderr)
         return 2
     lock = threading.Lock()
+    if args.trace:
+        from . import trace
+        trace.enable(out / "trace.jsonl")
 
     def run_one(e: Entry) -> list[dict]:
-        from . import baselines, cbmc_pipeline
+        from . import baselines, cbmc_pipeline, trace
+        trace.set_context(entry_id=e.id, arm=args.arm, attempt=None)
         llm = transcript.with_context(entry_id=e.id)
         adir = out / "artifacts" / e.id.replace("/", "__")
         if args.arm == "verify":
@@ -249,6 +253,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--out", default="runs/latest")
     r.add_argument("--fresh", action="store_true", help="ignore results already in --out")
     r.add_argument("--keep-events", action="store_true", help="keep successful-stage events in results")
+    r.add_argument("--trace", action="store_true",
+                   help="write <out>/trace.jsonl: every LLM call, verifier run and event, in order (for demos)")
     r.add_argument("--stop-at-usage", type=float, default=None,
                    help="claude backend: stop starting entries once the 5-hour session utilization reaches this "
                         "fraction (e.g. 0.75); in-flight entries abort (unrecorded) past it + --usage-slack")
